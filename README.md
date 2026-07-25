@@ -63,6 +63,26 @@ docker run --rm -p 8080:80 jejuneness:kg_graph_viewer
 open http://localhost:8080
 ```
 
+## Health check
+
+Install the check package once (requires `jejune_cli` to be installed):
+
+```sh
+pip install -e check/
+```
+
+Then probe a running container:
+
+```sh
+python -m jejune_kg_viewer_check status
+```
+
+The default port is `8080`. Override with `KG_PORT`:
+
+```sh
+KG_PORT=9090 python -m jejune_kg_viewer_check status
+```
+
 ## Visualizing the sample graph
 
 ### Visualizing the default sample graph

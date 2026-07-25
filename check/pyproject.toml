@@ -1,0 +1,12 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jejune-kg-viewer-check"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.entry-points."jejune.plugins"]
+kg-viewer = "jejune_kg_viewer_check.plugin:plugin"
