@@ -27,12 +27,24 @@ def kg_viewer_group():
     """Commands for the jejune kg-graph-viewer UI component."""
 
 
-@kg_viewer_group.command("status")
-def status():
-    """Check that the kg-graph-viewer container is reachable."""
-    ok, msg = _check_availability()
-    symbol = click.style("ok", fg="green") if ok else click.style("error", fg="red")
-    click.echo(f"kg-viewer  {symbol}  {msg}")
+@kg_viewer_group.command("status-availability")
+def status_availability():
+    """Show kg-viewer availability status (mirrors the doctor Status column)."""
+    ok, _ = _check_availability()
+    if ok:
+        click.echo(f"kg-viewer: {click.style('ok', fg='green')}")
+    else:
+        click.echo(f"kg-viewer: {click.style('error', fg='red')}")
+
+
+@kg_viewer_group.command("hint-availability")
+def hint_availability():
+    """Show how to start the kg-graph-viewer container."""
+    ok, _ = _check_availability()
+    if ok:
+        click.echo(click.style("kg-viewer is reachable", fg="green"))
+    else:
+        click.echo("run `docker compose --env-file deployment.env up -d`")
 
 
 plugin = JejunePlugin(
