@@ -16,8 +16,17 @@ function AppContent() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const url = params.get('url');
     const file = params.get('file');
-    if (file) {
+    if (url) {
+      fetch(url)
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.text();
+        })
+        .then(content => loadRdfFromString(content))
+        .catch(() => loadRdfFromString(sampleTtl));
+    } else if (file) {
       fetch(`/data/${file}`)
         .then(r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
