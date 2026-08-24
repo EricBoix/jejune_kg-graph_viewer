@@ -75,8 +75,20 @@ export const styles = {
   anchoredHeader: {
     flexShrink: 0,
     display: 'flex',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: '6px 8px 0',
+  },
+  openMdButton: {
+    background: '#26a69a',
+    border: '1px solid #004d40',
+    borderRadius: '4px',
+    color: '#fff',
+    cursor: 'pointer',
+    fontSize: '11px',
+    fontWeight: 'bold',
+    lineHeight: 1,
+    padding: '3px 8px',
   },
   closeButton: {
     background: 'none',

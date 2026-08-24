@@ -1,11 +1,14 @@
 import { useMemo, useState, useEffect, useLayoutEffect, useRef, Fragment } from 'react';
 import { useGraphData } from '../context/GraphDataContext';
 import { useViewSettings } from '../context/ViewSettingsContext';
+import { useDocsServer } from '../context/DocsServerContext';
 import { getLocalName } from '../services/rdfParser';
 import { config } from '../config';
 import { GraphNode } from '../types/graph.types';
 import { NodeDetails } from './NodeDetails';
 import { styles, highlightStyle } from './DocumentMentionsInfoPanel.styles';
+
+let mdBrowserWindow: Window | null = null;
 
 const NEO_ID_PREDICATE = config.rdf.neo4jIdPredicateUri;
 const DOCUMENT_TYPE = 'Document';
@@ -35,6 +38,7 @@ interface Props { node: GraphNode }
 export function DocumentMentions({ node }: Props) {
   const { nodes, edges } = useGraphData();
   const { nodeLabelMode } = useViewSettings();
+  const docsConfig = useDocsServer();
 
   const neoId = node.metadata[NEO_ID_PREDICATE]?.[0];
 
@@ -138,16 +142,65 @@ export function DocumentMentions({ node }: Props) {
           </div>
         );
       })()}
-      {anchoredPopup && (
-        <div ref={anchoredRef} style={{ ...styles.anchoredPopup, left: anchoredLeft, top: anchoredPopup.top }}>
-          <div style={styles.anchoredHeader}>
-            <button style={styles.closeButton} onClick={() => setAnchoredPopup(null)}>✕</button>
+      {anchoredPopup && (() => {
+        const anchoredText    = findMeta(anchoredPopup.node.metadata, 'text');
+        const anchoredDocName = findMeta(anchoredPopup.node.metadata, 'doc_name');
+        const canOpenMd = !!(docsConfig && anchoredText && anchoredDocName);
+
+        async function openInMarkdown() {
+          if (!docsConfig || !anchoredText || !anchoredDocName) return;
+          const { docsServerUrl, triggerUrl, mdBrowserUrl } = docsConfig;
+
+          const mdUrlResp = await fetch(
+            `${docsServerUrl}/docs/${encodeURIComponent(anchoredDocName)}/markdown-url`,
+            { mode: 'cors' },
+          );
+          if (!mdUrlResp.ok) return;
+          const { markdown_url: markdownUrl } = await mdUrlResp.json();
+
+          const fetchUrl = `${triggerUrl}/fetch?url=${encodeURIComponent(markdownUrl)}&name=${encodeURIComponent(anchoredDocName)}&text=${encodeURIComponent(anchoredText)}`;
+
+          async function tryTrigger() {
+            const fr = await fetch(fetchUrl, { mode: 'cors' });
+            if (!fr.ok) return false;
+            const { file, sl, sc, el, ec } = await fr.json();
+            const highlightUrl = `${triggerUrl}/highlight?file=${encodeURIComponent(file)}&sl=${sl}&sc=${sc}&el=${el}&ec=${ec}`;
+            const hr = await fetch(highlightUrl, { mode: 'cors' });
+            return hr.ok;
+          }
+
+          let triggered = false;
+          try { triggered = await tryTrigger(); } catch (_) {}
+
+          if (mdBrowserWindow && !mdBrowserWindow.closed) {
+            mdBrowserWindow.focus();
+          } else {
+            mdBrowserWindow = window.open(`${mdBrowserUrl}/?folder=/config`, 'markdown_browser');
+          }
+          if (triggered) return;
+
+          for (let i = 0; i < 30; i++) {
+            await new Promise(r => setTimeout(r, 500));
+            try { if (await tryTrigger()) return; } catch (_) {}
+          }
+        }
+
+        return (
+          <div ref={anchoredRef} style={{ ...styles.anchoredPopup, left: anchoredLeft, top: anchoredPopup.top }}>
+            <div style={styles.anchoredHeader}>
+              {canOpenMd && (
+                <button style={styles.openMdButton} onClick={openInMarkdown}>
+                  Open in Markdown
+                </button>
+              )}
+              <button style={styles.closeButton} onClick={() => setAnchoredPopup(null)}>✕</button>
+            </div>
+            <div style={styles.anchoredContent}>
+              <NodeDetails node={anchoredPopup.node} />
+            </div>
           </div>
-          <div style={styles.anchoredContent}>
-            <NodeDetails node={anchoredPopup.node} />
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </>
   );
 }

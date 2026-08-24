@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { GraphProvider } from './context/GraphContext';
+import { DocsServerProvider } from './context/DocsServerContext';
 import { GraphCanvas } from './components/GraphCanvas';
 import { LoadRdfButton } from './components/LoadRdfButton';
 import { SettingsMenu } from './components/SettingsMenu';
@@ -79,9 +80,11 @@ function AppContent() {
 
 function App() {
   return (
-    <GraphProvider>
-      <AppContent />
-    </GraphProvider>
+    <DocsServerProvider>
+      <GraphProvider>
+        <AppContent />
+      </GraphProvider>
+    </DocsServerProvider>
   );
 }
 
