@@ -7,9 +7,9 @@ interface DocsServerConfig {
   mdBrowserUrl: string;
 }
 
-const docsServerUrl = import.meta.env.VITE_DOCS_SERVER_URL ?? '';
-const triggerUrl    = import.meta.env.VITE_MARKDOWN_TRIGGER_URL ?? '';
-const mdBrowserUrl  = import.meta.env.VITE_MARKDOWN_BROWSER_URL ?? '';
+const docsServerUrl = import.meta.env.JEJUNE_DOCS_SERVER_URL ?? '';
+const triggerUrl    = import.meta.env.JEJUNE_MARKDOWN_TRIGGER_URL ?? '';
+const mdBrowserUrl  = import.meta.env.JEJUNE_MARKDOWN_BROWSER_URL ?? '';
 
 const value: DocsServerConfig | null = docsServerUrl
   ? { docsServerUrl, triggerUrl, mdBrowserUrl }
