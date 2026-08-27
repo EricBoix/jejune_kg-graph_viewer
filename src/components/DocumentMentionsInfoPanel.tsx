@@ -117,7 +117,7 @@ export function DocumentMentions({ node }: Props) {
       </ul>
       {nodePopup && (() => {
         const text   = findMeta(nodePopup.node.metadata, 'text');
-        const source = findMeta(nodePopup.node.metadata, 'source');
+        const source = findMeta(nodePopup.node.metadata, 'source_name');
         const hasTextOrSource = text || source;
         return (
           <div ref={popupRef} style={{ ...styles.popup, left: popupLeft, top: nodePopup.y + 14 }}>
@@ -143,22 +143,24 @@ export function DocumentMentions({ node }: Props) {
         );
       })()}
       {anchoredPopup && (() => {
-        const anchoredText    = findMeta(anchoredPopup.node.metadata, 'text');
-        const anchoredDocName = findMeta(anchoredPopup.node.metadata, 'doc_name');
-        const canOpenMd = !!(docsConfig && anchoredText && anchoredDocName);
+        const anchoredText        = findMeta(anchoredPopup.node.metadata, 'text');
+        const anchoredSourceSlug  = findMeta(anchoredPopup.node.metadata, 'jejune_source_slug');
+        const canOpenMd = !!(docsConfig && anchoredText && anchoredSourceSlug);
 
         async function openInMarkdown() {
-          if (!docsConfig || !anchoredText || !anchoredDocName) return;
+          if (!docsConfig || !anchoredText || !anchoredSourceSlug) return;
           const { docsServerUrl, triggerUrl, mdBrowserUrl } = docsConfig;
 
+          const catalogName = `jejune_doc_${anchoredSourceSlug}`;
+
           const mdUrlResp = await fetch(
-            `${docsServerUrl}/docs/${encodeURIComponent(anchoredDocName)}/markdown-url`,
+            `${docsServerUrl}/docs/${encodeURIComponent(catalogName)}/markdown-url`,
             { mode: 'cors' },
           );
           if (!mdUrlResp.ok) return;
           const { markdown_url: markdownUrl } = await mdUrlResp.json();
 
-          const fetchUrl = `${triggerUrl}/fetch?url=${encodeURIComponent(markdownUrl)}&name=${encodeURIComponent(anchoredDocName)}&text=${encodeURIComponent(anchoredText)}`;
+          const fetchUrl = `${triggerUrl}/fetch?url=${encodeURIComponent(markdownUrl)}&name=${encodeURIComponent(catalogName)}&text=${encodeURIComponent(anchoredText)}`;
 
           async function tryTrigger() {
             const fr = await fetch(fetchUrl, { mode: 'cors' });
