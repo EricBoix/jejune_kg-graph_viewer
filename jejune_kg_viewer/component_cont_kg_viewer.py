@@ -25,7 +25,7 @@ class comp_kg_viewer(cont_comp):
             dependencies=[ComponentRegistry().get("ecosystem")],
             hint="run `jejune deployment install`",
         )
-        self.repos = [("jejune_kg-graph_viewer", None, "KG_GRAPH_VIEWER_CONTEXT")]
+        self.repos = [(None, "KG_GRAPH_VIEWER_CONTEXT")]
 
     def is_available(self) -> bool:
         return self.is_built()
