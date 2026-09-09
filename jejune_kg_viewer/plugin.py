@@ -58,7 +58,6 @@ def hint_availability():
 plugin = plugin_description(
     name="kg-viewer",
     group=kg_viewer_group,
-    repo_name="jejune_kg-graph_viewer",
     config_vars=[_CONFIG_VAR],
     config_hint=f"Set {_CONFIG_VAR} to the port exposed by the kg-graph-viewer container (default {_DEFAULT_PORT}).",
     avail_hint="",
