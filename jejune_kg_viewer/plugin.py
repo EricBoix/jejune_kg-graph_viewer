@@ -4,10 +4,15 @@ import urllib.request
 
 import click
 
-from jejune_cli.plugin import JejunePlugin
+from jejune_cli.plugin_description import plugin_description
+
+from .component_cont_kg_viewer import comp_kg_viewer
+from .click_cont_comp_kg_viewer import view
 
 _DEFAULT_PORT = "8080"
 _CONFIG_VAR = "KG_PORT"
+
+_component = comp_kg_viewer()
 
 
 def _check_availability() -> tuple[bool, str]:
@@ -25,6 +30,9 @@ def _check_availability() -> tuple[bool, str]:
 @click.group("kg-viewer")
 def kg_viewer_group():
     """Commands for the jejune kg-graph-viewer UI component."""
+
+
+kg_viewer_group.add_command(view)
 
 
 @kg_viewer_group.command("status-availability")
@@ -47,12 +55,14 @@ def hint_availability():
         click.echo("run `docker compose --env-file deployment.env up -d`")
 
 
-plugin = JejunePlugin(
+plugin = plugin_description(
     name="kg-viewer",
     group=kg_viewer_group,
+    repo_name="jejune_kg-graph_viewer",
     config_vars=[_CONFIG_VAR],
     config_hint=f"Set {_CONFIG_VAR} to the port exposed by the kg-graph-viewer container (default {_DEFAULT_PORT}).",
     avail_hint="",
     check_availability=_check_availability,
     stage="extension",
+    component=_component,
 )
