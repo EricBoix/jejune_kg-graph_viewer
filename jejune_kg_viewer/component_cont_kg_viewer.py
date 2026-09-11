@@ -23,7 +23,7 @@ class comp_kg_viewer(cont_comp):
             dockerfile="DockerContext/Dockerfile",
             service_name="kg-graph-viewer",
             dependencies=[ComponentRegistry().get("ecosystem")],
-            hint="run `jejune deployment install`",
+            hint="run `jejune build`",
         )
         self.repos = [(None, "KG_GRAPH_VIEWER_CONTEXT")]
 

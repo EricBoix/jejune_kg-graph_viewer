@@ -64,4 +64,5 @@ plugin = plugin_description(
     check_availability=_check_availability,
     stage="extension",
     component=_component,
+    repo_name="jejune_kg-graph_viewer",
 )
