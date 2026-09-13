@@ -117,7 +117,7 @@ export function DocumentMentions({ node }: Props) {
       </ul>
       {nodePopup && (() => {
         const text   = findMeta(nodePopup.node.metadata, 'text');
-        const source = findMeta(nodePopup.node.metadata, 'source_name');
+        const source = findMeta(nodePopup.node.metadata, 'jejune_source_name');
         const hasTextOrSource = text || source;
         return (
           <div ref={popupRef} style={{ ...styles.popup, left: popupLeft, top: nodePopup.y + 14 }}>
