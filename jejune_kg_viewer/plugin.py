@@ -16,6 +16,8 @@ _component = comp_kg_viewer()
 
 
 def _check_availability() -> tuple[bool, str]:
+    if not _component.is_running()[0]:
+        return False, "container not running"
     port = os.environ.get(_CONFIG_VAR, _DEFAULT_PORT)
     url = f"http://localhost:{port}/"
     try:
