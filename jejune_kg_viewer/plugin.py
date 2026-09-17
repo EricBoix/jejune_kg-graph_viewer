@@ -64,7 +64,7 @@ plugin = plugin_description(
     config_hint=f"Set {_CONFIG_VAR} to the port exposed by the kg-graph-viewer container (default {_DEFAULT_PORT}).",
     avail_hint="",
     check_availability=_check_availability,
-    stage="extension",
+    target_role="deployer",
     component=_component,
     repo_name="jejune_kg-graph_viewer",
 )
