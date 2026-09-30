@@ -9,7 +9,6 @@ from urllib.parse import urlparse
 import click
 
 from jejune_cli.component_containerized import cont_comp
-from jejune_cli.component_registry import ComponentRegistry
 
 _VIEWER_DATA = Path.home() / ".jejune" / "viewer_data"
 _VIEWER_NAME_PREFIX = "jejune_kg_viewer_"
@@ -22,10 +21,11 @@ class comp_kg_viewer(cont_comp):
             image_name="jejune:kg_graph_viewer",
             dockerfile="DockerContext/Dockerfile",
             service_name="kg-graph-viewer",
-            dependencies=[ComponentRegistry().get("ecosystem")],
             hint="run `jejune build`",
         )
         self.repos = [(None, "KG_GRAPH_VIEWER_CONTEXT")]
+        if cont_comp._ecosystem is not None:
+            self.conditional_dependencies = [(lambda: not self.is_available(), cont_comp._ecosystem)]
 
     def is_available(self) -> bool:
         return self.is_built()

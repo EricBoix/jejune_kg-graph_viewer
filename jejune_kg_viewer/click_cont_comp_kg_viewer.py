@@ -1,6 +1,6 @@
 import click
 
-from jejune_cli.component_registry import REGISTRY as COMP_REGISTRY
+from jejune_cli.app_context import AppContext
 
 _META_URL = "viewer_url"
 
@@ -42,7 +42,7 @@ def view(ctx, new_server, list_viewers):
     Set JEJUNE_BROWSER to override the browser command.
     Set KG_GRAPH_VIEWER_CONTEXT to a local clone of jejune_kg-graph_viewer.
     """
-    kg_viewer = COMP_REGISTRY.get("kg-viewer")
+    kg_viewer = ctx.find_object(AppContext).component_registry.get("kg-viewer")
     if list_viewers:
         kg_viewer.list_views()
         return
@@ -57,9 +57,10 @@ def view(ctx, new_server, list_viewers):
 
 @view.command("stop")
 @click.argument("target", required=False, default=None)
-def view_stop(target):
+@click.pass_context
+def view_stop(ctx, target):
     """Stop viewer container(s).
 
     TARGET is an integer id or 'all'. Defaults to the last container on the stack.
     """
-    COMP_REGISTRY.get("kg-viewer").stop_views(target)
+    ctx.find_object(AppContext).component_registry.get("kg-viewer").stop_views(target)
