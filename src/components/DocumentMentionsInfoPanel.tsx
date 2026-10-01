@@ -166,7 +166,8 @@ export function DocumentMentions({ node }: Props) {
             const fr = await fetch(fetchUrl, { mode: 'cors' });
             if (!fr.ok) return false;
             const { file, sl, sc, el, ec } = await fr.json();
-            const highlightUrl = `${triggerUrl}/highlight?file=${encodeURIComponent(file)}&sl=${sl}&sc=${sc}&el=${el}&ec=${ec}`;
+            const termParam    = neoId ? `&term=${encodeURIComponent(neoId)}` : '';
+            const highlightUrl = `${triggerUrl}/highlight?file=${encodeURIComponent(file)}&sl=${sl}&sc=${sc}&el=${el}&ec=${ec}${termParam}`;
             const hr = await fetch(highlightUrl, { mode: 'cors' });
             return hr.ok;
           }
