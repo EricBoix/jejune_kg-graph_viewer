@@ -6,13 +6,13 @@ import click
 
 from jejune_cli.plugin_description import PluginDescription
 
-from .component_cont_kg_viewer import comp_kg_viewer
+from .component_cont_kg_viewer import CompKgViewer
 from .click_cont_comp_kg_viewer import view
 
 _DEFAULT_PORT = "8080"
 _CONFIG_VAR = "KG_PORT"
 
-_component = comp_kg_viewer()
+_component = CompKgViewer()
 
 
 def _check_availability() -> tuple[bool, str]:

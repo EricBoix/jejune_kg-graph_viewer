@@ -1,4 +1,5 @@
 """kg-viewer containerized component."""
+
 import os
 import shutil
 import socket
@@ -14,7 +15,7 @@ _VIEWER_DATA = Path.home() / ".jejune" / "viewer_data"
 _VIEWER_NAME_PREFIX = "jejune_kg_viewer_"
 
 
-class comp_kg_viewer(ContComp):
+class CompKgViewer(ContComp):
     def __init__(self) -> None:
         super().__init__(
             name="kg-viewer",
@@ -25,7 +26,9 @@ class comp_kg_viewer(ContComp):
         )
         self.repos = [(None, "KG_GRAPH_VIEWER_CONTEXT")]
         if self._context.ecosystem is not None:
-            self.conditional_dependencies = [(lambda: not self.is_available(), self._context.ecosystem)]
+            self.conditional_dependencies = [
+                (lambda: not self.is_available(), self._context.ecosystem)
+            ]
 
     def is_available(self) -> bool:
         return self.is_built()
@@ -46,7 +49,8 @@ class comp_kg_viewer(ContComp):
 
     def _launch(self, container: str, port: int) -> None:
         rc = self._context.docker.run_detached(
-            container, self.image_name,
+            container,
+            self.image_name,
             publish=[f"{port}:80"],
             volumes=[f"{_VIEWER_DATA}:/usr/share/nginx/html/data"],
         )
@@ -73,6 +77,7 @@ class comp_kg_viewer(ContComp):
         browser = os.environ.get("JEJUNE_BROWSER")
         if browser:
             import subprocess
+
             subprocess.Popen([browser, url])
         else:
             webbrowser.open(url)
@@ -84,7 +89,11 @@ class comp_kg_viewer(ContComp):
 
         mine = self.json_entries()
         last = next(
-            (e for e in reversed(mine) if self._context.docker.is_running(e["container"])[0]),
+            (
+                e
+                for e in reversed(mine)
+                if self._context.docker.is_running(e["container"])[0]
+            ),
             None,
         )
 
@@ -146,4 +155,4 @@ class comp_kg_viewer(ContComp):
             click.echo(f"Stopping {name} ...")
             self._context.docker.stop_container(name)
 
-        self.unregister_containers(*(e["container"] for e in to_stop))
+        self._context.coordination.unregister(*(e["container"] for e in to_stop))
