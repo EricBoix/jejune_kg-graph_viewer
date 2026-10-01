@@ -24,8 +24,8 @@ class comp_kg_viewer(cont_comp):
             hint="run `jejune build`",
         )
         self.repos = [(None, "KG_GRAPH_VIEWER_CONTEXT")]
-        if cont_comp._ecosystem is not None:
-            self.conditional_dependencies = [(lambda: not self.is_available(), cont_comp._ecosystem)]
+        if self._context.ecosystem is not None:
+            self.conditional_dependencies = [(lambda: not self.is_available(), self._context.ecosystem)]
 
     def is_available(self) -> bool:
         return self.is_built()
@@ -45,7 +45,7 @@ class comp_kg_viewer(cont_comp):
         raise click.ClickException("No free port found in range 8080-9000")
 
     def _launch(self, container: str, port: int) -> None:
-        rc = self._docker.run_detached(
+        rc = self._context.docker.run_detached(
             container, self.image_name,
             publish=[f"{port}:80"],
             volumes=[f"{_VIEWER_DATA}:/usr/share/nginx/html/data"],
@@ -84,7 +84,7 @@ class comp_kg_viewer(cont_comp):
 
         mine = self.json_entries()
         last = next(
-            (e for e in reversed(mine) if self._docker.is_running(e["container"])[0]),
+            (e for e in reversed(mine) if self._context.docker.is_running(e["container"])[0]),
             None,
         )
 
@@ -112,7 +112,7 @@ class comp_kg_viewer(cont_comp):
         for entry in mine:
             name = entry["container"]
             port = entry["port"]
-            running = self._docker.is_running(name)[0]
+            running = self._context.docker.is_running(name)[0]
             status = (
                 click.style("running", fg="green")
                 if running
@@ -144,6 +144,6 @@ class comp_kg_viewer(cont_comp):
         for entry in to_stop:
             name = entry["container"]
             click.echo(f"Stopping {name} ...")
-            self._docker.stop_container(name)
+            self._context.docker.stop_container(name)
 
         self.unregister_containers(*(e["container"] for e in to_stop))
