@@ -4,7 +4,7 @@ import urllib.request
 
 import click
 
-from jejune_cli.plugin_description import plugin_description
+from jejune_cli.plugin_description import PluginDescription
 
 from .component_cont_kg_viewer import comp_kg_viewer
 from .click_cont_comp_kg_viewer import view
@@ -57,7 +57,7 @@ def hint_availability():
         click.echo("run `docker compose --env-file deployment.env up -d`")
 
 
-plugin = plugin_description(
+plugin = PluginDescription(
     name="kg-viewer",
     group=kg_viewer_group,
     config_vars=[_CONFIG_VAR],
