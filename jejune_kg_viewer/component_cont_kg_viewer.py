@@ -8,13 +8,13 @@ from urllib.parse import urlparse
 
 import click
 
-from jejune_cli.component_containerized import cont_comp
+from jejune_cli.component_containerized import ContComp
 
 _VIEWER_DATA = Path.home() / ".jejune" / "viewer_data"
 _VIEWER_NAME_PREFIX = "jejune_kg_viewer_"
 
 
-class comp_kg_viewer(cont_comp):
+class comp_kg_viewer(ContComp):
     def __init__(self) -> None:
         super().__init__(
             name="kg-viewer",
