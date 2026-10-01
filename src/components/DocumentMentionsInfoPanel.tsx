@@ -145,7 +145,9 @@ export function DocumentMentions({ node }: Props) {
       {anchoredPopup && (() => {
         const anchoredText        = findMeta(anchoredPopup.node.metadata, 'text');
         const anchoredSourceSlug  = findMeta(anchoredPopup.node.metadata, 'jejune_source_slug');
+        const anchoredSourceName  = findMeta(anchoredPopup.node.metadata, 'jejune_source_name');
         const canOpenMd = !!(docsConfig && anchoredText && anchoredSourceSlug);
+        const hasTextOrSource = anchoredText || anchoredSourceName;
 
         async function openInMarkdown() {
           if (!docsConfig || !anchoredText || !anchoredSourceSlug) return;
@@ -199,7 +201,24 @@ export function DocumentMentions({ node }: Props) {
               <button style={styles.closeButton} onClick={() => setAnchoredPopup(null)}>✕</button>
             </div>
             <div style={styles.anchoredContent}>
-              <NodeDetails node={anchoredPopup.node} />
+              {hasTextOrSource ? (
+                <>
+                  {anchoredText && (
+                    <div style={styles.tooltipSection}>
+                      <strong>Text</strong>
+                      <p style={styles.tooltipText}>{highlightText(anchoredText, neoId)}</p>
+                    </div>
+                  )}
+                  {anchoredSourceName && (
+                    <div style={styles.tooltipSection}>
+                      <strong>Source</strong>
+                      <p style={styles.tooltipText}>{anchoredSourceName}</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <NodeDetails node={anchoredPopup.node} />
+              )}
             </div>
           </div>
         );
