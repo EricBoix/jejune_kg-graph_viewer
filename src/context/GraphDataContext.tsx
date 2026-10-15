@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import type { Store as N3Store } from 'n3';
 import { GraphNode, GraphEdge, GraphData, Selection } from '../types/graph.types';
 
 interface GraphDataContextValue {
   nodes: GraphNode[];
   edges: GraphEdge[];
   namespaces: Record<string, string>;
+  n3Store: N3Store | null;
   selection: Selection;
   selectedNode: GraphNode | undefined;
   selectedEdge: GraphEdge | undefined;
@@ -20,12 +22,14 @@ export function GraphDataProvider({ children }: { children: ReactNode }) {
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [edges, setEdges] = useState<GraphEdge[]>([]);
   const [namespaces, setNamespaces] = useState<Record<string, string>>({});
+  const [n3Store, setN3Store] = useState<N3Store | null>(null);
   const [selection, setSelection] = useState<Selection>({ type: null, id: null });
 
   const setGraphData = useCallback((data: GraphData) => {
     setNodes(data.nodes);
     setEdges(data.edges);
     setNamespaces(data.namespaces);
+    setN3Store(data.n3Store);
     setSelection({ type: null, id: null });
   }, []);
 
@@ -49,7 +53,7 @@ export function GraphDataProvider({ children }: { children: ReactNode }) {
 
   return (
     <GraphDataContext.Provider value={{
-      nodes, edges, namespaces, selection, selectedNode, selectedEdge,
+      nodes, edges, namespaces, n3Store, selection, selectedNode, selectedEdge,
       setGraphData, setSelection, updateNode, updateEdge,
     }}>
       {children}

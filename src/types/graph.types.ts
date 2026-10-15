@@ -14,10 +14,13 @@ export interface GraphEdge {
   predicateUri: string;
 }
 
+import type { Store as N3Store } from 'n3';
+
 export interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
   namespaces: Record<string, string>;
+  n3Store: N3Store | null;
 }
 
 export type SelectionType = 'node' | 'edge' | null;

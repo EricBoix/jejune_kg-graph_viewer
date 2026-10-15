@@ -3,46 +3,65 @@ import { useState, useEffect } from 'react';
 import { InfoPanel } from './InfoPanel';
 import { EditPanel } from './EditPanel';
 import { OverviewPanel } from './OverviewPanel';
+import { SparqlPanel } from './SparqlPanel';
 import { useGraphData } from '../context/GraphDataContext';
+import { useViewSettings } from '../context/ViewSettingsContext';
 
 interface SidebarProps {
   width: number;
 }
 
+type PanelId = 'info' | 'edit' | 'overview' | 'sparql';
+
 export function Sidebar({ width }: SidebarProps) {
-  const [activePanel, setActivePanel] = useState<'info' | 'edit' | 'overview'>('info');
+  const [activePanel, setActivePanel] = useState<PanelId>('info');
   const { selection } = useGraphData();
+  const { setSparqlMatchedIds } = useViewSettings();
 
   useEffect(() => {
     if (selection.type !== null) setActivePanel('info');
   }, [selection]);
 
+  function switchPanel(panel: PanelId) {
+    if (activePanel === 'sparql' && panel !== 'sparql') {
+      setSparqlMatchedIds(null);
+    }
+    setActivePanel(panel);
+  }
+
   return (
     <div style={{ ...styles.sidebar, width }}>
       <div style={styles.tabs}>
         <button
-          onClick={() => setActivePanel('info')}
+          onClick={() => switchPanel('info')}
           style={{ ...styles.tab, ...(activePanel === 'info' ? styles.activeTab : {}) }}
         >
           Info
         </button>
         <button
-          onClick={() => setActivePanel('edit')}
+          onClick={() => switchPanel('edit')}
           style={{ ...styles.tab, ...(activePanel === 'edit' ? styles.activeTab : {}) }}
         >
           Edit
         </button>
         <button
-          onClick={() => setActivePanel('overview')}
+          onClick={() => switchPanel('overview')}
           style={{ ...styles.tab, ...(activePanel === 'overview' ? styles.activeTab : {}) }}
         >
           Overview
+        </button>
+        <button
+          onClick={() => switchPanel('sparql')}
+          style={{ ...styles.tab, ...(activePanel === 'sparql' ? styles.activeTab : {}) }}
+        >
+          SPARQL
         </button>
       </div>
       <div style={styles.panelContainer}>
         {activePanel === 'info' && <InfoPanel />}
         {activePanel === 'edit' && <EditPanel />}
         {activePanel === 'overview' && <OverviewPanel />}
+        {activePanel === 'sparql' && <SparqlPanel />}
       </div>
     </div>
   );

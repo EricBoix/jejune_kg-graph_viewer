@@ -15,6 +15,7 @@ interface ViewSettingsContextValue {
   highlightedNodeTypes: Map<string, number>;
   visibleNodeTypes: Set<string>;
   visibleEdgeTypes: Set<string>;
+  sparqlMatchedIds: Set<string> | null;
   setNodeLabelMode: (mode: NodeLabelMode) => void;
   setPhysicsEnabled: (enabled: boolean) => void;
   setHideIsolatedNodes: (value: boolean) => void;
@@ -22,6 +23,7 @@ interface ViewSettingsContextValue {
   toggleHighlightedNodeType: (type: string) => void;
   toggleNodeType: (type: string) => void;
   toggleEdgeType: (type: string) => void;
+  setSparqlMatchedIds: (ids: Set<string> | null) => void;
 }
 
 const ViewSettingsContext = createContext<ViewSettingsContextValue | null>(null);
@@ -37,6 +39,7 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
   const colorCounterRef = useRef(0);
   const [visibleNodeTypes, setVisibleNodeTypes] = useState<Set<string>>(new Set());
   const [visibleEdgeTypes, setVisibleEdgeTypes] = useState<Set<string>>(new Set());
+  const [sparqlMatchedIds, setSparqlMatchedIds] = useState<Set<string> | null>(null);
 
   useEffect(() => {
     const allTypes = new Set(nodes.flatMap(n => n.types));
@@ -44,6 +47,7 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
     setVisibleNodeTypes(allTypes);
     setVisibleEdgeTypes(new Set(edges.map(e => e.label)));
     setHighlightedNodeTypes(new Map());
+    setSparqlMatchedIds(null);
   }, [nodes, edges]);
 
   const toggleHighlightedNodeType = useCallback((type: string) => {
@@ -83,9 +87,9 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
   return (
     <ViewSettingsContext.Provider value={{
       nodeLabelMode, physicsEnabled, hideIsolatedNodes, overviewListsCollapsed,
-      highlightedNodeTypes, visibleNodeTypes, visibleEdgeTypes,
+      highlightedNodeTypes, visibleNodeTypes, visibleEdgeTypes, sparqlMatchedIds,
       setNodeLabelMode, setPhysicsEnabled, setHideIsolatedNodes, setOverviewListsCollapsed,
-      toggleHighlightedNodeType, toggleNodeType, toggleEdgeType,
+      toggleHighlightedNodeType, toggleNodeType, toggleEdgeType, setSparqlMatchedIds,
     }}>
       {children}
     </ViewSettingsContext.Provider>

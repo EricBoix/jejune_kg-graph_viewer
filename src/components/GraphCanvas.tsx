@@ -9,7 +9,10 @@ import { PhysicsToggle } from './PhysicsToggle';
 
 export function GraphCanvas() {
   const { nodes, edges, setSelection } = useGraphData();
-  const { nodeLabelMode, physicsEnabled, hideIsolatedNodes, visibleNodeTypes, visibleEdgeTypes, highlightedNodeTypes } = useViewSettings();
+  const {
+    nodeLabelMode, physicsEnabled, hideIsolatedNodes,
+    visibleNodeTypes, visibleEdgeTypes, highlightedNodeTypes, sparqlMatchedIds,
+  } = useViewSettings();
 
   const visibleNodes = useMemo(
     () => nodes.filter(n => n.types.length === 0 || n.types.some(t => visibleNodeTypes.has(t))),
@@ -56,9 +59,22 @@ export function GraphCanvas() {
     [visibleEdges, displayedNodeIds]
   );
 
+  const sparqlNodes = useMemo(
+    () => sparqlMatchedIds ? displayedNodes.filter(n => sparqlMatchedIds.has(n.id)) : displayedNodes,
+    [displayedNodes, sparqlMatchedIds]
+  );
+
+  const sparqlEdges = useMemo(
+    () =>
+      sparqlMatchedIds
+        ? displayedEdges.filter(e => sparqlMatchedIds.has(e.from) && sparqlMatchedIds.has(e.to))
+        : displayedEdges,
+    [displayedEdges, sparqlMatchedIds]
+  );
+
   const { containerRef, fit } = useVisNetwork({
-    nodes: displayedNodes,
-    edges: displayedEdges,
+    nodes: sparqlNodes,
+    edges: sparqlEdges,
     nodeLabelMode,
     physicsEnabled,
     highlightedNodeTypes,
@@ -75,7 +91,7 @@ export function GraphCanvas() {
           backgroundColor: colors.backgroundCanvas,
         }}
       />
-      <NodeCount displayed={displayedNodes.length} total={nodes.length} />
+      <NodeCount displayed={sparqlNodes.length} total={nodes.length} />
       <div style={{ position: 'absolute', bottom: '12px', right: '12px', zIndex: 10, display: 'flex', gap: '8px' }}>
         <FitScreenButton onFit={fit} />
         <PhysicsToggle />
