@@ -4,20 +4,25 @@ import { useViewSettings } from '../context/ViewSettingsContext';
 import { useSparqlQuery } from '../hooks/useSparqlQuery';
 import { colors } from '../styles/theme';
 
-const TOP_20_DEGREE_QUERY = `SELECT ?x (COUNT(*) AS ?degree) WHERE {
-  { ?x ?p ?o }
+const NEO_MENTIONS = 'http://example.org/neo4j/MENTIONS';
+
+function buildTopByMentionsQuery(limit: number): string {
+  return `SELECT ?x (COUNT(*) AS ?degree) WHERE {
+  { ?x <${NEO_MENTIONS}> ?o }
   UNION
-  { ?s ?p ?x }
+  { ?s <${NEO_MENTIONS}> ?x }
 }
 GROUP BY ?x
 ORDER BY DESC(?degree)
-LIMIT 20`;
+LIMIT ${limit}`;
+}
 
 export function SparqlPanel() {
   const { nodes, n3Store } = useGraphData();
   const { setSparqlMatchedIds } = useViewSettings();
   const { run, clear, matchedIds, error } = useSparqlQuery(n3Store, nodes);
   const [sparqlText, setSparqlText] = useState('');
+  const [topLimit, setTopLimit] = useState(20);
 
   useEffect(() => {
     setSparqlMatchedIds(matchedIds);
@@ -32,17 +37,32 @@ export function SparqlPanel() {
     setSparqlText('');
   }
 
-  function handleTop20() {
-    setSparqlText(TOP_20_DEGREE_QUERY);
-    run(TOP_20_DEGREE_QUERY);
+  function handleTopByMentions() {
+    const query = buildTopByMentionsQuery(topLimit);
+    setSparqlText(query);
+    run(query);
+  }
+
+  function handleLimitChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const parsed = parseInt(event.target.value, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      setTopLimit(parsed);
+    }
   }
 
   return (
     <div style={styles.panel}>
       <div style={styles.presetRow}>
-        <button style={styles.presetButton} onClick={handleTop20}>
-          Top 20 by degree
+        <button style={styles.presetButton} onClick={handleTopByMentions}>
+          Top N by degree
         </button>
+        <input
+          type="number"
+          min={1}
+          value={topLimit}
+          onChange={handleLimitChange}
+          style={styles.limitInput}
+        />
       </div>
       <textarea
         style={styles.textarea}
@@ -85,6 +105,14 @@ const styles = {
     border: `1px solid ${colors.border}`,
     borderRadius: '4px',
     cursor: 'pointer',
+  },
+  limitInput: {
+    width: '56px',
+    padding: '6px 6px',
+    fontSize: '12px',
+    border: `1px solid ${colors.border}`,
+    borderRadius: '4px',
+    textAlign: 'right' as const,
   },
   textarea: {
     fontFamily: 'monospace',
