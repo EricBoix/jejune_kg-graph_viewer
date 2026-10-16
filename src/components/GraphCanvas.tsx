@@ -34,20 +34,23 @@ export function GraphCanvas() {
   );
 
   // Second filter pass: drop nodes whose every edge connects to a Document node.
+  // Use the full graph (not the visible subgraph) to evaluate isolation so that a
+  // node hidden only because its neighbors' types are currently deselected is not
+  // incorrectly classified as isolated.
   const displayedNodes = useMemo(() => {
     if (!hideIsolatedNodes) return visibleNodes;
-    const documentIds = new Set(
-      visibleNodes.filter(n => n.types.includes('Document')).map(n => n.id)
+    const allDocumentIds = new Set(
+      nodes.filter(n => n.types.includes('Document')).map(n => n.id)
     );
     const connectedToNonDoc = new Set<string>();
-    for (const edge of visibleEdges) {
-      if (!documentIds.has(edge.from) || !documentIds.has(edge.to)) {
+    for (const edge of edges) {
+      if (!allDocumentIds.has(edge.from) || !allDocumentIds.has(edge.to)) {
         connectedToNonDoc.add(edge.from);
         connectedToNonDoc.add(edge.to);
       }
     }
-    return visibleNodes.filter(n => documentIds.has(n.id) || connectedToNonDoc.has(n.id));
-  }, [visibleNodes, visibleEdges, hideIsolatedNodes]);
+    return visibleNodes.filter(n => allDocumentIds.has(n.id) || connectedToNonDoc.has(n.id));
+  }, [visibleNodes, nodes, edges, hideIsolatedNodes]);
 
   const displayedNodeIds = useMemo(
     () => new Set(displayedNodes.map(n => n.id)),
