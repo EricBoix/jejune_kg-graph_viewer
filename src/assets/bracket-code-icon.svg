@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <!-- < on the left, pointing left (outward) -->
+  <polyline
+    points="32,15 8,50 32,85"
+    fill="none"
+    stroke="#1a1a1a"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- / in the center -->
+  <line
+    x1="43" y1="82"
+    x2="57" y2="18"
+    stroke="#1a1a1a"
+    stroke-width="8"
+    stroke-linecap="round"
+  />
+  <!-- > on the right, pointing right (outward) -->
+  <polyline
+    points="68,15 92,50 68,85"
+    fill="none"
+    stroke="#1a1a1a"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

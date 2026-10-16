@@ -4,6 +4,7 @@ import { useGraphData } from '../context/GraphDataContext';
 import { useViewSettings } from '../context/ViewSettingsContext';
 import { useVisNetwork } from '../hooks/useVisNetwork';
 import { NodeCount } from './NodeCount';
+import { FileSourceButton } from './FileSourceButton';
 import { FitScreenButton } from './FitScreenButton';
 import { PhysicsToggle } from './PhysicsToggle';
 
@@ -100,7 +101,10 @@ export function GraphCanvas() {
           backgroundColor: colors.backgroundCanvas,
         }}
       />
-      <NodeCount displayed={sparqlNodes.length} total={nodes.length} />
+      <div style={{ position: 'absolute', bottom: '12px', left: '12px', zIndex: 10, display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+        <NodeCount displayed={sparqlNodes.length} total={nodes.length} />
+        <FileSourceButton />
+      </div>
       <div style={{ position: 'absolute', bottom: '12px', right: '12px', zIndex: 10, display: 'flex', gap: '8px' }}>
         <FitScreenButton onFit={fit} />
         <PhysicsToggle />

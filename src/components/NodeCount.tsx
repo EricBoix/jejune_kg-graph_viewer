@@ -65,10 +65,6 @@ export function NodeCount({ displayed, total }: NodeCountProps) {
 
 const styles = {
   wrapper: {
-    position: 'absolute',
-    bottom: '12px',
-    left: '12px',
-    zIndex: 10,
   },
   badge: {
     backgroundColor: 'white',

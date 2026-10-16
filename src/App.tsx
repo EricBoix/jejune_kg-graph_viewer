@@ -11,6 +11,7 @@ import { styles } from './styles/App.styles';
 import { config } from './config';
 import sampleTtl from './data/sample.ttl?raw';
 import bracketCodeIcon from './assets/bracket-code-icon.png';
+import jejuneIcon from './assets/jejune-icon.png';
 
 function AppContent() {
   const { loadRdfFromString } = useRdfStore();
@@ -63,6 +64,15 @@ function AppContent() {
     <div style={styles.container}>
       <header style={styles.header}>
         <h1 style={styles.title}>
+          <a
+            href="https://github.com/EricBoix/jejune_project"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.repoLink}
+            title="jejune project"
+          >
+            <img src={jejuneIcon} alt="jejune project" style={styles.repoIcon} />
+          </a>
           Knowledge Graph Visualization
           <a
             href={config.project.repoUrl}
