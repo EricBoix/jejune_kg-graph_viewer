@@ -1,0 +1,11 @@
+{
+    "cSpell.customDictionaries": {
+        "jejune_kg-graph_viewer-words": {
+            "name": "jejune_kg_graph_viewer",
+            "path": "${workspaceRoot}/jejune_kg-graph_viewer-words.txt",
+            "description": "Words used for jejune_kg-graph_viewer project",
+            "addWords": true
+        },
+        "jejune_kg_graph_viewer": true
+    }
+}

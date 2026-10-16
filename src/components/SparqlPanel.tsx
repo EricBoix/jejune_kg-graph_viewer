@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useGraphData } from '../context/GraphDataContext';
 import { useViewSettings } from '../context/ViewSettingsContext';
 import { useSparqlQuery } from '../hooks/useSparqlQuery';
@@ -19,14 +19,10 @@ LIMIT ${limit}`;
 
 export function SparqlPanel() {
   const { nodes, n3Store } = useGraphData();
-  const { setSparqlMatchedIds } = useViewSettings();
-  const { run, clear, matchedIds, error } = useSparqlQuery(n3Store, nodes);
+  const { setSparqlMatchedIds, sparqlMatchedIds } = useViewSettings();
+  const { run, clear, error } = useSparqlQuery(n3Store, nodes, setSparqlMatchedIds);
   const [sparqlText, setSparqlText] = useState('');
   const [topLimit, setTopLimit] = useState(20);
-
-  useEffect(() => {
-    setSparqlMatchedIds(matchedIds);
-  }, [matchedIds, setSparqlMatchedIds]);
 
   function handleRun() {
     run(sparqlText);
@@ -72,8 +68,8 @@ export function SparqlPanel() {
         spellCheck={false}
       />
       {error && <p style={styles.error}>{error}</p>}
-      {matchedIds !== null && !error && (
-        <p style={styles.count}>{matchedIds.size} node{matchedIds.size !== 1 ? 's' : ''} matched</p>
+      {sparqlMatchedIds !== null && !error && (
+        <p style={styles.count}>{sparqlMatchedIds.size} node{sparqlMatchedIds.size !== 1 ? 's' : ''} matched</p>
       )}
       <div style={styles.actionRow}>
         <button style={styles.runButton} onClick={handleRun} disabled={!sparqlText.trim()}>

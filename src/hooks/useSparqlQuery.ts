@@ -5,8 +5,11 @@ import type { GraphNode } from '../types/graph.types';
 
 const queryEngine = new QueryEngine();
 
-export function useSparqlQuery(n3Store: N3Store | null, nodes: GraphNode[]) {
-  const [matchedIds, setMatchedIds] = useState<Set<string> | null>(null);
+export function useSparqlQuery(
+  n3Store: N3Store | null,
+  nodes: GraphNode[],
+  onMatchedIds: (ids: Set<string> | null) => void
+) {
   const [error, setError] = useState<string | null>(null);
 
   const nodeIdSet = useMemo(() => new Set(nodes.map(n => n.id)), [nodes]);
@@ -31,19 +34,19 @@ export function useSparqlQuery(n3Store: N3Store | null, nodes: GraphNode[]) {
             }
           }
         }
-        setMatchedIds(matched);
+        onMatchedIds(matched);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
-        setMatchedIds(null);
+        onMatchedIds(null);
       }
     },
-    [n3Store, nodeIdSet]
+    [n3Store, nodeIdSet, onMatchedIds]
   );
 
   const clear = useCallback(() => {
-    setMatchedIds(null);
+    onMatchedIds(null);
     setError(null);
-  }, []);
+  }, [onMatchedIds]);
 
-  return { run, clear, matchedIds, error };
+  return { run, clear, error };
 }
