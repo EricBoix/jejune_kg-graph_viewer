@@ -15,7 +15,7 @@ export function GraphCanvas() {
   } = useViewSettings();
 
   const visibleNodes = useMemo(
-    () => nodes.filter(n => n.types.length === 0 || n.types.some(t => visibleNodeTypes.has(t))),
+    () => nodes.filter(n => n.types.length === 0 || n.types.every(t => visibleNodeTypes.has(t))),
     [nodes, visibleNodeTypes]
   );
 
