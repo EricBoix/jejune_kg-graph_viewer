@@ -14,8 +14,14 @@ export function GraphCanvas() {
     visibleNodeTypes, visibleEdgeTypes, highlightedNodeTypes, sparqlMatchedIds,
   } = useViewSettings();
 
+  // A node is visible when ANY of its types is checked (some, not every).
+  // RDF nodes routinely carry several types (e.g. ['Concept','skos:Concept',
+  // 'owl:NamedIndividual']); requiring every type to be checked would silently
+  // hide nodes whose count IS shown in the Overview panel, because the panel
+  // counts with .includes() (some semantics). Keeping both consistent avoids
+  // the "1514 listed but 0 shown" confusion.
   const visibleNodes = useMemo(
-    () => nodes.filter(n => n.types.length === 0 || n.types.every(t => visibleNodeTypes.has(t))),
+    () => nodes.filter(n => n.types.length === 0 || n.types.some(t => visibleNodeTypes.has(t))),
     [nodes, visibleNodeTypes]
   );
 
