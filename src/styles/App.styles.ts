@@ -18,6 +18,20 @@ export const styles = {
     margin: 0,
     fontSize: '20px',
     fontWeight: 600,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  repoLink: {
+    display: 'flex',
+    alignItems: 'center',
+    opacity: 0.75,
+    transition: 'opacity 0.15s',
+  },
+  repoIcon: {
+    width: '24px',
+    height: '24px',
+    filter: 'brightness(0) invert(1)',
   },
   toolbar: {
     display: 'flex',

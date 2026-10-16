@@ -1,4 +1,12 @@
+import pkg from '../package.json';
+
 export const config = {
+
+  project: {
+    // Repo URL derived from the single ecosystem-repo-base defined in package.json,
+    // mirroring the [tool.jejune] ecosystem-repo-base pattern used in pyproject.toml.
+    repoUrl: `${pkg.jejune['ecosystem-repo-base']}/${pkg.name}`,
+  },
 
   sidebar: {
     defaultWidth: 300,

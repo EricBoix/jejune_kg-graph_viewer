@@ -1,6 +1,9 @@
 {
-  "name": "vis-network-app",
+  "name": "jejune_kg-graph_viewer",
   "private": true,
+  "jejune": {
+    "ecosystem-repo-base": "https://github.com/EricBoix"
+  },
   "version": "0.0.0",
   "type": "module",
   "scripts": {

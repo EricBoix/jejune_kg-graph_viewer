@@ -10,6 +10,7 @@ import { useRdfStore } from './hooks/useRdfStore';
 import { styles } from './styles/App.styles';
 import { config } from './config';
 import sampleTtl from './data/sample.ttl?raw';
+import bracketCodeIcon from './assets/bracket-code-icon.png';
 
 function AppContent() {
   const { loadRdfFromString } = useRdfStore();
@@ -61,7 +62,18 @@ function AppContent() {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1 style={styles.title}>Knowledge Graph Visualization</h1>
+        <h1 style={styles.title}>
+          Knowledge Graph Visualization
+          <a
+            href={config.project.repoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.repoLink}
+            title="GitHub repository"
+          >
+            <img src={bracketCodeIcon} alt="GitHub repository" style={styles.repoIcon} />
+          </a>
+        </h1>
         <div style={styles.toolbar}>
           <LoadRdfButton />
           <SettingsMenu />
