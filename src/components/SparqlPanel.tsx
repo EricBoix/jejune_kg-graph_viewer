@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useGraphData } from '../context/GraphDataContext';
 import { useViewSettings } from '../context/ViewSettingsContext';
 import { useSparqlQuery } from '../hooks/useSparqlQuery';
+import { useSparqlRemote } from '../hooks/useSparqlRemote';
+import { useOxigraph } from '../context/OxigraphContext';
 import { colors } from '../styles/theme';
 
 const NEO_MENTIONS = 'http://example.org/neo4j/MENTIONS';
@@ -20,7 +22,23 @@ LIMIT ${limit}`;
 export function SparqlPanel() {
   const { nodes, n3Store } = useGraphData();
   const { setSparqlMatchedIds, sparqlMatchedIds } = useViewSettings();
-  const { run, clear, error } = useSparqlQuery(n3Store, nodes, setSparqlMatchedIds);
+  const oxigraphUrl = useOxigraph();
+
+  const { run: runLocal, clear: clearLocal, error: errorLocal } = useSparqlQuery(
+    n3Store,
+    nodes,
+    setSparqlMatchedIds,
+  );
+  const { runRemote, clearRemote, error: errorRemote } = useSparqlRemote(
+    oxigraphUrl ?? '',
+    nodes,
+    setSparqlMatchedIds,
+  );
+
+  const run = oxigraphUrl ? runRemote : runLocal;
+  const clear = oxigraphUrl ? clearRemote : clearLocal;
+  const error = oxigraphUrl ? errorRemote : errorLocal;
+
   const [sparqlText, setSparqlText] = useState('');
   const [topLimit, setTopLimit] = useState(20);
 
@@ -70,6 +88,9 @@ export function SparqlPanel() {
       {error && <p style={styles.error}>{error}</p>}
       {sparqlMatchedIds !== null && !error && (
         <p style={styles.count}>{sparqlMatchedIds.size} node{sparqlMatchedIds.size !== 1 ? 's' : ''} matched</p>
+      )}
+      {oxigraphUrl && (
+        <p style={styles.modeLabel}>Oxigraph mode — queries sent to server</p>
       )}
       <div style={styles.actionRow}>
         <button style={styles.runButton} onClick={handleRun} disabled={!sparqlText.trim()}>
@@ -130,6 +151,12 @@ const styles = {
     margin: 0,
     fontSize: '12px',
     color: colors.textSubtle,
+  },
+  modeLabel: {
+    margin: 0,
+    fontSize: '11px',
+    color: colors.textMuted,
+    fontStyle: 'italic',
   },
   actionRow: {
     display: 'flex',

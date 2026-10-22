@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
+import { runtimeConfig } from '../runtimeConfig';
 
 interface DocsServerConfig {
   docsServerUrl: string;
@@ -7,9 +8,10 @@ interface DocsServerConfig {
   mdBrowserUrl: string;
 }
 
-const docsServerUrl = import.meta.env.JEJUNE_DOCS_SERVER_URL ?? '';
-const triggerUrl    = import.meta.env.JEJUNE_MARKDOWN_TRIGGER_URL ?? '';
-const mdBrowserUrl  = import.meta.env.JEJUNE_MARKDOWN_BROWSER_URL ?? '';
+const cfg = runtimeConfig();
+const docsServerUrl = cfg.DOCS_SERVER_URL;
+const triggerUrl    = cfg.MARKDOWN_TRIGGER_URL;
+const mdBrowserUrl  = cfg.MARKDOWN_BROWSER_URL;
 
 const value: DocsServerConfig | null = docsServerUrl
   ? { docsServerUrl, triggerUrl, mdBrowserUrl }

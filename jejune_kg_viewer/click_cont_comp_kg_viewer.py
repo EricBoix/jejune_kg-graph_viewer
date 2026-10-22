@@ -26,8 +26,15 @@ class _ViewGroup(click.Group):
 )
 @click.option("--new-server", is_flag=True, help="Start a new viewer container")
 @click.option("--list", "list_viewers", is_flag=True, help="List viewer containers")
+@click.option(
+    "--oxigraph",
+    "oxigraph_uri",
+    default=None,
+    envvar="OXIGRAPH_URI",
+    help="Oxigraph URI (default: OXIGRAPH_URI env var). Launches viewer in Oxigraph mode.",
+)
 @click.pass_context
-def view(ctx, new_server, list_viewers):
+def view(ctx, new_server, list_viewers, oxigraph_uri):
     """Visualize a turtle RDF file (file:// URL) in the browser.
 
     \b
@@ -47,6 +54,9 @@ def view(ctx, new_server, list_viewers):
         kg_viewer.list_views()
         return
     if ctx.invoked_subcommand is not None:
+        return
+    if oxigraph_uri:
+        kg_viewer.open_view_oxigraph(oxigraph_uri, new_server)
         return
     url = ctx.meta.get(_META_URL)
     if url:

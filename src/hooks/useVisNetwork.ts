@@ -6,6 +6,7 @@ import { GraphNode, GraphEdge, Selection, NodeLabelMode } from '../types/graph.t
 
 import { config } from '../config';
 const NEO_ID_PREDICATE = config.rdf.neo4jIdPredicateUri;
+const JEJUNE_SIMILAR_TO = 'urn:jejune:similarTo';
 
 interface UseVisNetworkProps {
   nodes: GraphNode[];
@@ -166,8 +167,20 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
       dataSet.remove(toRemove);
     }
 
-    // Update/add edges
-    const updates = edges.map(e => ({ id: e.id, from: e.from, to: e.to, label: e.label }));
+    // Update/add edges — similarity edges rendered as dashed, low-weight lines
+    const updates = edges.map(e =>
+      e.predicateUri === JEJUNE_SIMILAR_TO
+        ? {
+            id: e.id,
+            from: e.from,
+            to: e.to,
+            label: '',
+            dashes: true,
+            width: 1,
+            color: { color: '#ccc', highlight: '#aaa' },
+          }
+        : { id: e.id, from: e.from, to: e.to, label: e.label },
+    );
     dataSet.update(updates);
   }, [edges]);
 

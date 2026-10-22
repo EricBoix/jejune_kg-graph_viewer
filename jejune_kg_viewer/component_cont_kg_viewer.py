@@ -82,6 +82,46 @@ class CompKgViewer(ContComp):
         else:
             webbrowser.open(url)
 
+    def open_view_oxigraph(self, oxigraph_uri: str, new_server: bool) -> None:
+        """Launch a kg-viewer container wired to an Oxigraph instance."""
+        _VIEWER_DATA.mkdir(parents=True, exist_ok=True)
+
+        mine = self.json_entries()
+        last = next(
+            (
+                e
+                for e in reversed(mine)
+                if e.get("oxigraph_uri") == oxigraph_uri
+                and self._context.docker.is_running(e["container"])[0]
+            ),
+            None,
+        )
+
+        if new_server or last is None:
+            self.build()
+            port = self._free_port()
+            entry = self.register_with_name(
+                lambda eid: f"{_VIEWER_NAME_PREFIX}oxigraph_{eid}",
+                port=port,
+                oxigraph_uri=oxigraph_uri,
+            )
+            rc = self._context.docker.run_detached(
+                entry["container"],
+                self.image_name,
+                publish=[f"{port}:80"],
+                volumes=[f"{_VIEWER_DATA}:/usr/share/nginx/html/data"],
+                env=[f"JEJUNE_OXIGRAPH_URL={oxigraph_uri}"],
+            )
+            if rc != 0:
+                raise SystemExit(rc)
+            port_used = port
+        else:
+            port_used = last["port"]
+
+        viewer_url = f"http://localhost:{port_used}/"
+        click.echo(f"  {viewer_url}")
+        self._open_browser(viewer_url)
+
     def open_view(self, url: str, new_server: bool) -> None:
         local_path = self._parse_file_url(url)
         _VIEWER_DATA.mkdir(parents=True, exist_ok=True)

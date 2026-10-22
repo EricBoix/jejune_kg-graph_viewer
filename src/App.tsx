@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 import { GraphProvider } from './context/GraphContext';
 import { DocsServerProvider } from './context/DocsServerContext';
+import { OxigraphProvider } from './context/OxigraphContext';
 import { GraphCanvas } from './components/GraphCanvas';
 import { LoadRdfButton } from './components/LoadRdfButton';
+import { OxigraphSourceButton } from './components/OxigraphSourceButton';
+import { FileSourceButton } from './components/FileSourceButton';
 import { SettingsMenu } from './components/SettingsMenu';
 import { Sidebar } from './components/Sidebar';
 import { ResizeHandle } from './components/ResizeHandle';
 import { useRdfStore } from './hooks/useRdfStore';
+import { useOxigraph } from './context/OxigraphContext';
+import { loadAllGraphs } from './hooks/useOxigraphLoad';
 import { styles } from './styles/App.styles';
 import { config } from './config';
 import sampleTtl from './data/sample.ttl?raw';
@@ -15,9 +20,17 @@ import jejuneIcon from './assets/jejune-icon.png';
 
 function AppContent() {
   const { loadRdfFromString } = useRdfStore();
+  const oxigraphUrl = useOxigraph();
   const [sidebarWidth, setSidebarWidth] = useState<number>(config.sidebar.defaultWidth);
 
   useEffect(() => {
+    if (oxigraphUrl) {
+      loadAllGraphs(oxigraphUrl)
+        .then(turtle => loadRdfFromString(turtle))
+        .catch(() => loadRdfFromString(sampleTtl));
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const url = params.get('url');
     const file = params.get('file');
@@ -40,7 +53,7 @@ function AppContent() {
     } else {
       loadRdfFromString(sampleTtl);
     }
-  }, [loadRdfFromString]);
+  }, [oxigraphUrl, loadRdfFromString]);
 
   function onHandleMouseDown(e: React.MouseEvent) {
     e.preventDefault();
@@ -85,7 +98,14 @@ function AppContent() {
           </a>
         </h1>
         <div style={styles.toolbar}>
-          <LoadRdfButton />
+          {oxigraphUrl ? (
+            <OxigraphSourceButton />
+          ) : (
+            <>
+              <LoadRdfButton />
+              <FileSourceButton />
+            </>
+          )}
           <SettingsMenu />
         </div>
       </header>
@@ -103,9 +123,11 @@ function AppContent() {
 function App() {
   return (
     <DocsServerProvider>
-      <GraphProvider>
-        <AppContent />
-      </GraphProvider>
+      <OxigraphProvider>
+        <GraphProvider>
+          <AppContent />
+        </GraphProvider>
+      </OxigraphProvider>
     </DocsServerProvider>
   );
 }
