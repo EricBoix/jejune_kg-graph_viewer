@@ -19,7 +19,7 @@ class CompKgViewer(ContComp):
     def __init__(self) -> None:
         super().__init__(
             name="kg-viewer",
-            image_name="jejune:kg_graph_viewer",
+            image_name="jejune:kg-graph-viewer",
             dockerfile="DockerContext/Dockerfile",
             service_name="kg-graph-viewer",
             hint="run `jejune build`",
