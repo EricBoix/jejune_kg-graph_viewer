@@ -78,6 +78,23 @@ export function EdgeInfoPanel() {
         <strong>To:</strong>{' '}
         <span style={styles.hoverable} title="Click to pin" {...hoverProps(selectedEdge.to)}>{nodeLabel(selectedEdge.to)}</span>
       </div>
+      {selectedEdge.chunkIds && selectedEdge.chunkIds.length > 0 && (
+        <div style={styles.section}>
+          <strong>Extracted from:</strong>
+          <ul>
+            {selectedEdge.chunkIds.map(chunkId => (
+              <li key={chunkId}>
+                <span style={styles.hoverable} title="Click to pin" {...hoverProps(chunkId)}>{nodeLabel(chunkId)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {selectedEdge.properties && Object.entries(selectedEdge.properties).map(([predicateUri, values]) => (
+        <div key={predicateUri} style={styles.section}>
+          <strong>{uriToPrefixedName(predicateUri, namespaces)}:</strong> {values.join(', ')}
+        </div>
+      ))}
       {nodePopup && (
         <div ref={popupRef} style={{ ...styles.popup, left: popupLeft, top: nodePopup.y + 14 }}>
           <NodeDetails node={nodePopup.node} />

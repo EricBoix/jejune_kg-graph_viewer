@@ -1,6 +1,8 @@
 import { GraphNode, GraphEdge, GraphData } from '../types/graph.types';
-import { ParsedRdf, getLocalName } from './rdfParser';
+import { ParsedRdf, RdfTriple, getLocalName } from './rdfParser';
+import { config } from '../config';
 
+const EXTRACTED_FROM = config.rdf.extractedFromPredicateUri;
 const RDFS_LABEL = 'http://www.w3.org/2000/01/rdf-schema#label';
 const RDF_TYPE   = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
 
@@ -39,6 +41,18 @@ export function convertRdfToGraph(parsedRdf: ParsedRdf): GraphData {
     metadata.set(subjectUri, {});
   }
 
+  const ensureNode = (uri: string) => {
+    if (nodeMap.has(uri)) return;
+    nodeMap.set(uri, {
+      id: uri,
+      label: labels.get(uri) || getLocalName(uri),
+      uri,
+      types: types.get(uri) ?? [],
+      metadata: {},
+    });
+    metadata.set(uri, {});
+  };
+
   // Second pass: process all triples
   for (const triple of triples) {
     const { subject, predicate, object, objectType, objectValue } = triple;
@@ -47,16 +61,7 @@ export function convertRdfToGraph(parsedRdf: ParsedRdf): GraphData {
     if ((objectType === 'uri' || objectType === 'blank') && predicate !== RDF_TYPE) {
       // URI/blank node object -> create edge
       // Also ensure the object node exists
-      if (!nodeMap.has(object)) {
-        nodeMap.set(object, {
-          id: object,
-          label: labels.get(object) || getLocalName(object),
-          uri: object,
-          types: types.get(object) ?? [],
-          metadata: {},
-        });
-        metadata.set(object, {});
-      }
+      ensureNode(object);
 
       const edgeId = `${subject}--${predicate}--${object}`;
       edges.push({
@@ -74,6 +79,44 @@ export function convertRdfToGraph(parsedRdf: ParsedRdf): GraphData {
           nodeMeta[predicate] = [];
         }
         nodeMeta[predicate].push(objectValue);
+      }
+    }
+  }
+
+  // Third pass: attach reifier annotations (RDF 1.2 triple terms) to their edge
+  const annotationsByReifier = new Map<string, RdfTriple[]>();
+  for (const annotation of parsedRdf.annotations) {
+    const list = annotationsByReifier.get(annotation.subject) ?? [];
+    list.push(annotation);
+    annotationsByReifier.set(annotation.subject, list);
+  }
+  const edgeById = new Map(edges.map(edge => [edge.id, edge]));
+  for (const reification of parsedRdf.reifications) {
+    const edgeId = `${reification.subject}--${reification.predicate}--${reification.object}`;
+    let edge = edgeById.get(edgeId);
+    if (!edge) {
+      // Reified but not asserted: still draw the edge
+      ensureNode(reification.subject);
+      ensureNode(reification.object);
+      edge = {
+        id: edgeId,
+        from: reification.subject,
+        to: reification.object,
+        label: getLocalName(reification.predicate),
+        predicateUri: reification.predicate,
+      };
+      edges.push(edge);
+      edgeById.set(edgeId, edge);
+    }
+    for (const annotation of annotationsByReifier.get(reification.reifier) ?? []) {
+      if (annotation.predicate === EXTRACTED_FROM && annotation.objectType === 'uri') {
+        const chunkIds = edge.chunkIds ?? [];
+        if (!chunkIds.includes(annotation.object)) chunkIds.push(annotation.object);
+        edge.chunkIds = chunkIds;
+      } else {
+        const properties = edge.properties ?? {};
+        (properties[annotation.predicate] ??= []).push(annotation.objectValue);
+        edge.properties = properties;
       }
     }
   }

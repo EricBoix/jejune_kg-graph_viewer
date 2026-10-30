@@ -12,6 +12,10 @@ export interface GraphEdge {
   to: string;
   label: string;
   predicateUri: string;
+  // Annotations of the edge triple (RDF 1.2 reifiers), keyed by full predicate URI
+  properties?: Record<string, string[]>;
+  // Ids of the chunk (Document) nodes the edge was extracted from
+  chunkIds?: string[];
 }
 
 import type { Store as N3Store } from 'n3';

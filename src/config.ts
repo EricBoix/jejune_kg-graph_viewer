@@ -17,6 +17,9 @@ export const config = {
   rdf: {
     // Predicate URI used by Neo4j RDF exports for the internal node identifier.
     neo4jIdPredicateUri: 'http://example.org/neo4j/id',
+    // Predicate linking an edge reifier (RDF 1.2 triple term) to the chunk
+    // (Document node) the edge was extracted from.
+    extractedFromPredicateUri: 'http://example.org/neo4j/extractedFrom',
   },
 
   // Initial values for settings that the user can change at runtime via the UI.

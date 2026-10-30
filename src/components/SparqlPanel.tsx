@@ -19,6 +19,12 @@ ORDER BY DESC(?degree)
 LIMIT ${limit}`;
 }
 
+// Edge provenance: RDF 1.2 reifiers pointing to the chunk an edge was extracted from
+const EDGES_BY_CHUNK_QUERY = `SELECT ?subject ?predicate ?object ?chunk WHERE {
+  ?reifier <http://www.w3.org/1999/02/22-rdf-syntax-ns#reifies> <<( ?subject ?predicate ?object )>> ;
+           <http://example.org/neo4j/extractedFrom> ?chunk .
+}`;
+
 export function SparqlPanel() {
   const { nodes, n3Store } = useGraphData();
   const { setSparqlMatchedIds, sparqlMatchedIds } = useViewSettings();
@@ -57,6 +63,11 @@ export function SparqlPanel() {
     run(query);
   }
 
+  function handleEdgesByChunk() {
+    setSparqlText(EDGES_BY_CHUNK_QUERY);
+    run(EDGES_BY_CHUNK_QUERY);
+  }
+
   function handleLimitChange(event: React.ChangeEvent<HTMLInputElement>) {
     const parsed = parseInt(event.target.value, 10);
     if (!isNaN(parsed) && parsed > 0) {
@@ -77,6 +88,9 @@ export function SparqlPanel() {
           onChange={handleLimitChange}
           style={styles.limitInput}
         />
+        <button style={styles.presetButton} onClick={handleEdgesByChunk}>
+          Edges by chunk
+        </button>
       </div>
       <textarea
         style={styles.textarea}

@@ -1,5 +1,8 @@
 const ALIGNMENT_GRAPH = 'urn:jejune:alignment';
 
+// Note : `?s ?p ?o` also matches the RDF 1.2 reifier triples (`rdf:reifies <<( s p o )>>`),
+// whose object is a triple term, so edge provenance is returned without a dedicated pattern.
+// This relies on Oxigraph serialising triple terms in text/turtle.
 const CONSTRUCT_ALL_QUERY = `
 CONSTRUCT {
   ?s ?p ?o .
