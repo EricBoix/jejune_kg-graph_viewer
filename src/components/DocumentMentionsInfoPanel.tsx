@@ -175,7 +175,7 @@ export function DocumentMentions({ node }: Props) {
           }
 
           let triggered = false;
-          try { triggered = await tryTrigger(); } catch (_) {}
+          try { triggered = await tryTrigger(); } catch { /* trigger unreachable: fall back to opening the window */ }
 
           if (mdBrowserWindow && !mdBrowserWindow.closed) {
             mdBrowserWindow.focus();
@@ -186,7 +186,7 @@ export function DocumentMentions({ node }: Props) {
 
           for (let i = 0; i < 30; i++) {
             await new Promise(r => setTimeout(r, 500));
-            try { if (await tryTrigger()) return; } catch (_) {}
+            try { if (await tryTrigger()) return; } catch { /* trigger not ready yet: retry on next iteration */ }
           }
         }
 

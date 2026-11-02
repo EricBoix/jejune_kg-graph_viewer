@@ -14,7 +14,15 @@ interface UseVisNetworkProps {
   nodeLabelMode: NodeLabelMode;
   physicsEnabled: boolean;
   highlightedNodeTypes: Map<string, number>;
+  pinnedNodeIds: Set<string>;
   onSelect: (selection: Selection) => void;
+  onNodeContextMenu: (request: NodeContextMenuRequest) => void;
+}
+
+export interface NodeContextMenuRequest {
+  nodeId: string;
+  x: number;
+  y: number;
 }
 
 interface NodeColor {
@@ -23,7 +31,7 @@ interface NodeColor {
   highlight: { background: string; border: string };
 }
 
-type VisNode = { id: string; label: string; color?: NodeColor };
+type VisNode = { id: string; label: string; color?: NodeColor; physics?: boolean; borderWidth?: number };
 
 const { graph } = config;
 
@@ -83,13 +91,15 @@ const networkOptions: Options = {
   },
 };
 
-export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, highlightedNodeTypes, onSelect }: UseVisNetworkProps) {
+export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, highlightedNodeTypes, pinnedNodeIds, onSelect, onNodeContextMenu }: UseVisNetworkProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<Network | null>(null);
   const nodesDataSetRef = useRef<DataSet<VisNode>>(new DataSet());
   const edgesDataSetRef = useRef<DataSet<{ id: string; from: string; to: string; label: string }>>(new DataSet());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const onNodeContextMenuRef = useRef(onNodeContextMenu);
+  onNodeContextMenuRef.current = onNodeContextMenu;
 
   // Initialize network once; event handlers read onSelectRef so they always
   // call the latest callback without recreating the network on every render.
@@ -123,6 +133,18 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
 
     network.on('deselectEdge', () => {
       onSelectRef.current({ type: null, id: null });
+    });
+
+    // Right-click, and ctrl-click on macOS, both emit a contextmenu event.
+    network.on('oncontext', (params) => {
+      const nodeId = network.getNodeAt(params.pointer.DOM);
+      if (nodeId === undefined) return;
+      params.event.preventDefault();
+      onNodeContextMenuRef.current({
+        nodeId: String(nodeId),
+        x: params.pointer.DOM.x,
+        y: params.pointer.DOM.y,
+      });
     });
 
     networkRef.current = network;
@@ -213,6 +235,22 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
     });
     nodesDataSetRef.current.update(updates);
   }, [highlightedNodeTypes, nodes]);
+
+  // A pinned node is excluded from the physics simulation (physics: false) but
+  // can still be dragged by hand; `fixed` would block dragging. Its border is
+  // thicker in the same color. vis-network doubles borderWidth when selected,
+  // so a selected pinned node stays thicker than a selected unpinned one.
+  useEffect(() => {
+    const updates = nodes.map(n => {
+      const pinned = pinnedNodeIds.has(n.id);
+      return {
+        id: n.id,
+        physics: !pinned,
+        borderWidth: pinned ? graph.pinnedNodeBorderWidthPx : graph.nodeBorderWidthPx,
+      };
+    });
+    nodesDataSetRef.current.update(updates);
+  }, [pinnedNodeIds, nodes]);
 
   const fit = useCallback(() => {
     networkRef.current?.fit();

@@ -16,6 +16,8 @@ interface ViewSettingsContextValue {
   visibleNodeTypes: Set<string>;
   visibleEdgeTypes: Set<string>;
   sparqlMatchedIds: Set<string> | null;
+  pinnedNodeIds: Set<string>;
+  togglePinnedNode: (nodeId: string) => void;
   setNodeLabelMode: (mode: NodeLabelMode) => void;
   setPhysicsEnabled: (enabled: boolean) => void;
   setHideIsolatedNodes: (value: boolean) => void;
@@ -40,6 +42,7 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
   const [visibleNodeTypes, setVisibleNodeTypes] = useState<Set<string>>(new Set());
   const [visibleEdgeTypes, setVisibleEdgeTypes] = useState<Set<string>>(new Set());
   const [sparqlMatchedIds, setSparqlMatchedIds] = useState<Set<string> | null>(null);
+  const [pinnedNodeIds, setPinnedNodeIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const allTypes = new Set(nodes.flatMap(n => n.types));
@@ -48,7 +51,20 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
     setVisibleEdgeTypes(new Set(edges.map(e => e.label)));
     setHighlightedNodeTypes(new Map());
     setSparqlMatchedIds(null);
+    setPinnedNodeIds(new Set());
   }, [nodes, edges]);
+
+  const togglePinnedNode = useCallback((nodeId: string) => {
+    setPinnedNodeIds(prev => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
+      return next;
+    });
+  }, []);
 
   const toggleHighlightedNodeType = useCallback((type: string) => {
     setHighlightedNodeTypes(prev => {
@@ -71,7 +87,11 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
   const toggleNodeType = useCallback((type: string) => {
     setVisibleNodeTypes(prev => {
       const next = new Set(prev);
-      next.has(type) ? next.delete(type) : next.add(type);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
       return next;
     });
   }, []);
@@ -79,7 +99,11 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
   const toggleEdgeType = useCallback((type: string) => {
     setVisibleEdgeTypes(prev => {
       const next = new Set(prev);
-      next.has(type) ? next.delete(type) : next.add(type);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
       return next;
     });
   }, []);
@@ -88,6 +112,7 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
     <ViewSettingsContext.Provider value={{
       nodeLabelMode, physicsEnabled, hideIsolatedNodes, overviewListsCollapsed,
       highlightedNodeTypes, visibleNodeTypes, visibleEdgeTypes, sparqlMatchedIds,
+      pinnedNodeIds, togglePinnedNode,
       setNodeLabelMode, setPhysicsEnabled, setHideIsolatedNodes, setOverviewListsCollapsed,
       toggleHighlightedNodeType, toggleNodeType, toggleEdgeType, setSparqlMatchedIds,
     }}>

@@ -42,6 +42,8 @@ export const config = {
     nodeSizePx:        20,
     nodeFontSizePx:    14,
     nodeBorderWidthPx: 2,
+    // Thicker border (same color) marking a node pinned against physics.
+    pinnedNodeBorderWidthPx: 4,
     edgeWidthPx:       2,
     edgeFontSizePx:    12,
     physics: {

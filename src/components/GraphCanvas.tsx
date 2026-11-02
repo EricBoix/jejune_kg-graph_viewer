@@ -1,8 +1,9 @@
 import { colors } from '../styles/theme';
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useGraphData } from '../context/GraphDataContext';
 import { useViewSettings } from '../context/ViewSettingsContext';
-import { useVisNetwork } from '../hooks/useVisNetwork';
+import { useVisNetwork, NodeContextMenuRequest } from '../hooks/useVisNetwork';
+import { NodeContextMenu } from './NodeContextMenu';
 import { NodeCount } from './NodeCount';
 import { FileSourceButton } from './FileSourceButton';
 import { FitScreenButton } from './FitScreenButton';
@@ -13,6 +14,7 @@ export function GraphCanvas() {
   const {
     nodeLabelMode, physicsEnabled, hideIsolatedNodes,
     visibleNodeTypes, visibleEdgeTypes, highlightedNodeTypes, sparqlMatchedIds,
+    pinnedNodeIds, togglePinnedNode,
   } = useViewSettings();
 
   // A node is visible when ANY of its types is checked (some, not every).
@@ -82,13 +84,21 @@ export function GraphCanvas() {
     [displayedEdges, sparqlMatchedIds]
   );
 
+  const [contextMenu, setContextMenu] = useState<NodeContextMenuRequest | null>(null);
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  // A new graph load resets the pins; a menu left open would act on a stale node.
+  useEffect(() => { setContextMenu(null); }, [nodes]);
+
   const { containerRef, fit } = useVisNetwork({
     nodes: sparqlNodes,
     edges: sparqlEdges,
     nodeLabelMode,
     physicsEnabled,
     highlightedNodeTypes,
+    pinnedNodeIds,
     onSelect: setSelection,
+    onNodeContextMenu: setContextMenu,
   });
 
   return (
@@ -101,6 +111,20 @@ export function GraphCanvas() {
           backgroundColor: colors.backgroundCanvas,
         }}
       />
+      {contextMenu && (
+        <NodeContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={closeContextMenu}
+          entries={[
+            {
+              label: 'Pinned',
+              checked: pinnedNodeIds.has(contextMenu.nodeId),
+              onSelect: () => togglePinnedNode(contextMenu.nodeId),
+            },
+          ]}
+        />
+      )}
       <div style={{ position: 'absolute', bottom: '12px', left: '12px', zIndex: 10, display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
         <NodeCount displayed={sparqlNodes.length} total={nodes.length} />
         <FileSourceButton />
