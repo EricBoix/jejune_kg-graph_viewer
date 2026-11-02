@@ -11,7 +11,7 @@ import { styles, highlightStyle } from './DocumentMentionsInfoPanel.styles';
 let mdBrowserWindow: Window | null = null;
 
 const NEO_ID_PREDICATE = config.rdf.neo4jIdPredicateUri;
-const DOCUMENT_TYPE = 'Document';
+const DOCUMENT_TYPE = 'DocumentChunk';
 
 function findMeta(metadata: Record<string, string[]>, localName: string): string | undefined {
   const key = Object.keys(metadata).find(uri => getLocalName(uri).toLowerCase() === localName.toLowerCase());

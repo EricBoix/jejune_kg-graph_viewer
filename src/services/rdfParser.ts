@@ -127,5 +127,10 @@ export function getLocalName(uri: string): string {
   if (slashIndex !== -1) {
     return uri.substring(slashIndex + 1);
   }
+  // URN style IRIs (e.g. urn:jejune:DocumentChunk) have neither '#' nor '/'
+  const colonIndex = uri.lastIndexOf(':');
+  if (colonIndex !== -1) {
+    return uri.substring(colonIndex + 1);
+  }
   return uri;
 }

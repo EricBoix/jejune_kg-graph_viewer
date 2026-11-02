@@ -40,14 +40,14 @@ export function GraphCanvas() {
     [edges, visibleEdgeTypes, visibleNodeIds]
   );
 
-  // Second filter pass: drop nodes whose every edge connects to a Document node.
+  // Second filter pass: drop nodes whose every edge connects to a DocumentChunk node.
   // Use the full graph (not the visible subgraph) to evaluate isolation so that a
   // node hidden only because its neighbors' types are currently deselected is not
   // incorrectly classified as isolated.
   const displayedNodes = useMemo(() => {
     if (!hideIsolatedNodes) return visibleNodes;
     const allDocumentIds = new Set(
-      nodes.filter(n => n.types.includes('Document')).map(n => n.id)
+      nodes.filter(n => n.types.includes('DocumentChunk')).map(n => n.id)
     );
     const connectedToNonDoc = new Set<string>();
     for (const edge of edges) {

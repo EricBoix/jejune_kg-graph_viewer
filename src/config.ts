@@ -18,7 +18,7 @@ export const config = {
     // Predicate URI used by Neo4j RDF exports for the internal node identifier.
     neo4jIdPredicateUri: 'http://example.org/neo4j/id',
     // Predicate linking an edge reifier (RDF 1.2 triple term) to the chunk
-    // (Document node) the edge was extracted from.
+    // (DocumentChunk node) the edge was extracted from.
     extractedFromPredicateUri: 'http://example.org/neo4j/extractedFrom',
   },
 
@@ -31,7 +31,7 @@ export const config = {
     physicsEnabled:       true,
     hideIsolatedNodes:    true,
     // Node types whose Overview checkbox is unchecked when a graph is first loaded.
-    hiddenByDefaultTypes: ['Document'],
+    hiddenByDefaultTypes: ['DocumentChunk'],
     // Whether the Node types / Relationship types lists in the Overview tab
     // start collapsed or expanded.
     overviewListsCollapsed: true,

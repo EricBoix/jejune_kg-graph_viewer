@@ -14,7 +14,7 @@ export interface GraphEdge {
   predicateUri: string;
   // Annotations of the edge triple (RDF 1.2 reifiers), keyed by full predicate URI
   properties?: Record<string, string[]>;
-  // Ids of the chunk (Document) nodes the edge was extracted from
+  // Ids of the chunk (DocumentChunk) nodes the edge was extracted from
   chunkIds?: string[];
 }
 
