@@ -77,21 +77,6 @@ export function SparqlPanel() {
 
   return (
     <div style={styles.panel}>
-      <div style={styles.presetRow}>
-        <button style={styles.presetButton} onClick={handleTopByMentions}>
-          Top N by degree
-        </button>
-        <input
-          type="number"
-          min={1}
-          value={topLimit}
-          onChange={handleLimitChange}
-          style={styles.limitInput}
-        />
-        <button style={styles.presetButton} onClick={handleEdgesByChunk}>
-          Edges by chunk
-        </button>
-      </div>
       <textarea
         style={styles.textarea}
         value={sparqlText}
@@ -114,6 +99,34 @@ export function SparqlPanel() {
           Clear
         </button>
       </div>
+      <div style={styles.presetRow}>
+        <div style={styles.presetLine}>
+          <button
+            style={styles.presetButton}
+            onClick={handleTopByMentions}
+            title="Display the nodes with most MENTIONS adjacent edges (incoming and outgoing) ranked by highest degree first"
+          >
+            Top N by degree
+          </button>
+          <input
+            type="number"
+            min={1}
+            value={topLimit}
+            onChange={handleLimitChange}
+            style={styles.limitInput}
+            title="Maximum number of nodes returned (that is Top N)"
+          />
+        </div>
+        <div style={styles.presetLine}>
+          <button
+            style={styles.presetButton}
+            onClick={handleEdgesByChunk}
+            title="Display every edge (that is every [subject, predicate, object] triplet) with the chunk out of which it was extracted"
+          >
+            Edges by chunk
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -126,6 +139,12 @@ const styles = {
     gap: '8px',
   },
   presetRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '6px',
+  },
+  presetLine: {
     display: 'flex',
     gap: '6px',
   },
