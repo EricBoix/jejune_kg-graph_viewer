@@ -52,6 +52,49 @@ type VisNode = { id: string; label: string; color?: NodeColor; physics?: boolean
 
 const { graph } = config;
 
+type EdgeSmooth = { enabled: boolean; type: string; roundness: number };
+
+const defaultEdgeSmooth: EdgeSmooth = {
+  enabled: true,
+  type: 'continuous',
+  roundness: 0.5,
+};
+
+// Fans out edges sharing the same pair of nodes (in either direction) so that
+// they, and their labels, do not overlap. Similarity edges are left out.
+// Edges alone between their two nodes get the default smoothing.
+function computeEdgeSmoothing(edges: GraphEdge[]): Map<string, EdgeSmooth> {
+  const edgesByNodePair = new Map<string, GraphEdge[]>();
+  const sortedEdges = edges
+    .filter(edge => edge.predicateUri !== JEJUNE_SIMILAR_TO)
+    .sort((first, second) => first.id.localeCompare(second.id));
+  for (const edge of sortedEdges) {
+    const pairKey = JSON.stringify([edge.from, edge.to].sort());
+    edgesByNodePair.set(pairKey, [...(edgesByNodePair.get(pairKey) ?? []), edge]);
+  }
+
+  const smoothingByEdgeId = new Map<string, EdgeSmooth>();
+  for (const parallelEdges of edgesByNodePair.values()) {
+    parallelEdges.forEach((edge, index) => {
+      if (parallelEdges.length === 1) {
+        smoothingByEdgeId.set(edge.id, defaultEdgeSmooth);
+        return;
+      }
+      // Alternate the side of the straight line, the curve side being relative
+      // to the edge direction: edges drawn in the reverse direction flip it.
+      const isOddSide = index % 2 === 1;
+      const isReversed = edge.from > edge.to;
+      smoothingByEdgeId.set(edge.id, {
+        enabled: true,
+        type: isOddSide !== isReversed ? 'curvedCW' : 'curvedCCW',
+        roundness: graph.parallelEdgeBaseRoundness
+          + graph.parallelEdgeRoundnessStep * Math.floor(index / 2),
+      });
+    });
+  }
+  return smoothingByEdgeId;
+}
+
 const networkOptions: Options = {
   nodes: {
     shape: 'dot',
@@ -83,11 +126,7 @@ const networkOptions: Options = {
     arrows: {
       to: { enabled: true, scaleFactor: 0.5 },
     },
-    smooth: {
-      enabled: true,
-      type: 'continuous',
-      roundness: 0.5,
-    },
+    smooth: defaultEdgeSmooth,
   },
   physics: {
     enabled: true,
@@ -112,7 +151,7 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
   const containerRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<Network | null>(null);
   const nodesDataSetRef = useRef<DataSet<VisNode>>(new DataSet());
-  const edgesDataSetRef = useRef<DataSet<{ id: string; from: string; to: string; label: string }>>(new DataSet());
+  const edgesDataSetRef = useRef<DataSet<{ id: string; from: string; to: string; label: string; smooth?: EdgeSmooth }>>(new DataSet());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
   const pendingPositionsRef = useRef<NodePositions>({});
@@ -220,6 +259,7 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
     }
 
     // Update/add edges — similarity edges rendered as dashed, low-weight lines
+    const smoothingByEdgeId = computeEdgeSmoothing(edges);
     const updates = edges.map(e =>
       e.predicateUri === JEJUNE_SIMILAR_TO
         ? {
@@ -231,7 +271,7 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
             width: 1,
             color: { color: '#ccc', highlight: '#aaa' },
           }
-        : { id: e.id, from: e.from, to: e.to, label: e.label },
+        : { id: e.id, from: e.from, to: e.to, label: e.label, smooth: smoothingByEdgeId.get(e.id) },
     );
     dataSet.update(updates);
   }, [edges]);

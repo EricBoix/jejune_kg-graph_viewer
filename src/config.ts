@@ -51,6 +51,15 @@ export const config = {
     pinnedNodeBorderWidthPx: 4,
     edgeWidthPx:       2,
     edgeFontSizePx:    12,
+    // Edges sharing the same pair of nodes would otherwise be drawn on top of each
+    // other (labels included). They are fanned out as curves alternating on both
+    // sides of the straight line between the nodes.
+    // Curvature (range 0 to 1) of the first pair of parallel edges: 0 is a straight
+    // line, raising it bends the curves further away from the line.
+    parallelEdgeBaseRoundness: 0.15,
+    // Curvature (range 0 to 1) added for each further pair of parallel edges:
+    // raising it spreads the edges (and their labels) further apart.
+    parallelEdgeRoundnessStep: 0.12,
     physics: {
       gravitationalConstant: -50,
       centralGravity:        0.01,
