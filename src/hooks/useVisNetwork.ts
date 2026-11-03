@@ -17,6 +17,7 @@ interface UseVisNetworkProps {
   pinnedNodeIds: Set<string>;
   onSelect: (selection: Selection) => void;
   onNodeContextMenu: (request: NodeContextMenuRequest) => void;
+  onEdgeContextMenu: (request: EdgeContextMenuRequest) => void;
 }
 
 export type NodePositions = Record<string, { x: number; y: number }>;
@@ -31,6 +32,12 @@ export interface NetworkHandle {
 
 export interface NodeContextMenuRequest {
   nodeId: string;
+  x: number;
+  y: number;
+}
+
+export interface EdgeContextMenuRequest {
+  edgeId: string;
   x: number;
   y: number;
 }
@@ -101,7 +108,7 @@ const networkOptions: Options = {
   },
 };
 
-export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, highlightedNodeTypes, pinnedNodeIds, onSelect, onNodeContextMenu }: UseVisNetworkProps) {
+export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, highlightedNodeTypes, pinnedNodeIds, onSelect, onNodeContextMenu, onEdgeContextMenu }: UseVisNetworkProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<Network | null>(null);
   const nodesDataSetRef = useRef<DataSet<VisNode>>(new DataSet());
@@ -111,6 +118,8 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
   const pendingPositionsRef = useRef<NodePositions>({});
   const onNodeContextMenuRef = useRef(onNodeContextMenu);
   onNodeContextMenuRef.current = onNodeContextMenu;
+  const onEdgeContextMenuRef = useRef(onEdgeContextMenu);
+  onEdgeContextMenuRef.current = onEdgeContextMenu;
 
   // Initialize network once; event handlers read onSelectRef so they always
   // call the latest callback without recreating the network on every render.
@@ -149,10 +158,20 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
     // Right-click, and ctrl-click on macOS, both emit a contextmenu event.
     network.on('oncontext', (params) => {
       const nodeId = network.getNodeAt(params.pointer.DOM);
-      if (nodeId === undefined) return;
+      if (nodeId !== undefined) {
+        params.event.preventDefault();
+        onNodeContextMenuRef.current({
+          nodeId: String(nodeId),
+          x: params.pointer.DOM.x,
+          y: params.pointer.DOM.y,
+        });
+        return;
+      }
+      const edgeId = network.getEdgeAt(params.pointer.DOM);
+      if (edgeId === undefined) return;
       params.event.preventDefault();
-      onNodeContextMenuRef.current({
-        nodeId: String(nodeId),
+      onEdgeContextMenuRef.current({
+        edgeId: String(edgeId),
         x: params.pointer.DOM.x,
         y: params.pointer.DOM.y,
       });

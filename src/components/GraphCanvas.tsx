@@ -4,9 +4,9 @@ import { useGraphData } from '../context/GraphDataContext';
 import { useViewSettings } from '../context/ViewSettingsContext';
 import { useScene } from '../context/SceneContext';
 import { useDisplayedGraph } from '../hooks/useDisplayedGraph';
-import { useVisNetwork, NodeContextMenuRequest } from '../hooks/useVisNetwork';
+import { useVisNetwork, NodeContextMenuRequest, EdgeContextMenuRequest } from '../hooks/useVisNetwork';
 import { SetupNotice } from './SetupNotice';
-import { NodeContextMenu } from './NodeContextMenu';
+import { GraphContextMenu } from './GraphContextMenu';
 import { NodeCount } from './NodeCount';
 import { FileSourceButton } from './FileSourceButton';
 import { FitScreenButton } from './FitScreenButton';
@@ -17,7 +17,7 @@ export function GraphCanvas() {
   const {
     nodeLabelMode, physicsEnabled,
     highlightedNodeTypes, sparqlMatchedIds,
-    pinnedNodeIds, togglePinnedNode, hideNode,
+    pinnedNodeIds, togglePinnedNode, hideNode, hideEdge,
   } = useViewSettings();
   const { registerNetworkHandle, notice, dismissNotice } = useScene();
 
@@ -38,9 +38,11 @@ export function GraphCanvas() {
 
   const [contextMenu, setContextMenu] = useState<NodeContextMenuRequest | null>(null);
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
+  const [edgeContextMenu, setEdgeContextMenu] = useState<EdgeContextMenuRequest | null>(null);
+  const closeEdgeContextMenu = useCallback(() => setEdgeContextMenu(null), []);
 
   // A new graph load resets the pins; a menu left open would act on a stale node.
-  useEffect(() => { setContextMenu(null); }, [nodes]);
+  useEffect(() => { setContextMenu(null); setEdgeContextMenu(null); }, [nodes]);
 
   const { containerRef, fit, networkHandle } = useVisNetwork({
     nodes: sparqlNodes,
@@ -51,6 +53,7 @@ export function GraphCanvas() {
     pinnedNodeIds,
     onSelect: setSelection,
     onNodeContextMenu: setContextMenu,
+    onEdgeContextMenu: setEdgeContextMenu,
   });
 
   useEffect(() => {
@@ -70,7 +73,7 @@ export function GraphCanvas() {
       />
       {notice && <SetupNotice message={notice} onDismiss={dismissNotice} />}
       {contextMenu && (
-        <NodeContextMenu
+        <GraphContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={closeContextMenu}
@@ -83,6 +86,19 @@ export function GraphCanvas() {
             {
               label: 'Hide',
               onSelect: () => hideNode(contextMenu.nodeId),
+            },
+          ]}
+        />
+      )}
+      {edgeContextMenu && (
+        <GraphContextMenu
+          x={edgeContextMenu.x}
+          y={edgeContextMenu.y}
+          onClose={closeEdgeContextMenu}
+          entries={[
+            {
+              label: 'Hide',
+              onSelect: () => hideEdge(edgeContextMenu.edgeId),
             },
           ]}
         />

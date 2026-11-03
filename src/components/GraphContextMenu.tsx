@@ -1,20 +1,20 @@
 import { useEffect } from 'react';
 import { colors } from '../styles/theme';
 
-export interface NodeContextMenuEntry {
+export interface GraphContextMenuEntry {
   label: string;
   checked?: boolean;
   onSelect: () => void;
 }
 
-interface NodeContextMenuProps {
+interface GraphContextMenuProps {
   x: number;
   y: number;
-  entries: NodeContextMenuEntry[];
+  entries: GraphContextMenuEntry[];
   onClose: () => void;
 }
 
-export function NodeContextMenu({ x, y, entries, onClose }: NodeContextMenuProps) {
+export function GraphContextMenu({ x, y, entries, onClose }: GraphContextMenuProps) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();

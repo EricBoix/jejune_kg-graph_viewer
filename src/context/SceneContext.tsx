@@ -114,6 +114,8 @@ export function SceneProvider({ children }: { children: ReactNode }) {
         Object.entries(setup.highlightedNodeTypes).filter(([, index]) => typeof index === 'number')
       ),
       displayedNodeIds: new Set(foundNodes.map(node => node.id)),
+      // The setup file does not record individually hidden edges: all edges are displayed again.
+      displayedEdgeIds: new Set(edges.map(edge => edge.id)),
       visibleEdgeTypes: new Set(edges.map(edge => edge.label).filter(type => !hiddenEdgeTypes.has(type))),
       pinnedNodeIds: new Set(pinnedNodes.map(node => node.id)),
     });

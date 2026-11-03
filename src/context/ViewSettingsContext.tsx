@@ -13,6 +13,7 @@ export interface ViewScene {
   hideIsolatedNodes: boolean;
   highlightedNodeTypes: Map<string, number>;
   displayedNodeIds: Set<string>;
+  displayedEdgeIds: Set<string>;
   visibleEdgeTypes: Set<string>;
   pinnedNodeIds: Set<string>;
 }
@@ -33,6 +34,9 @@ interface ViewSettingsContextValue {
   pinnedNodeIds: Set<string>;
   togglePinnedNode: (nodeId: string) => void;
   hideNode: (nodeId: string) => void;
+  // Ids of the individual edges put on display; the edge context menu removes them one by one.
+  displayedEdgeIds: Set<string>;
+  hideEdge: (edgeId: string) => void;
   applyScene: (scene: ViewScene) => void;
   setAllNodesDisplayed: (displayed: boolean) => void;
   setNodeLabelMode: (mode: NodeLabelMode) => void;
@@ -60,6 +64,7 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
   const [visibleEdgeTypes, setVisibleEdgeTypes] = useState<Set<string>>(new Set());
   const [sparqlMatchedIds, setSparqlMatchedIds] = useState<Set<string> | null>(null);
   const [pinnedNodeIds, setPinnedNodeIds] = useState<Set<string>>(new Set());
+  const [displayedEdgeIds, setDisplayedEdgeIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // A node starts displayed when it has no type or at least one type not hidden by default.
@@ -72,7 +77,16 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
     setHighlightedNodeTypes(new Map());
     setSparqlMatchedIds(null);
     setPinnedNodeIds(new Set());
+    setDisplayedEdgeIds(new Set(edges.map(edge => edge.id)));
   }, [nodes, edges]);
+
+  const hideEdge = useCallback((edgeId: string) => {
+    setDisplayedEdgeIds(prev => {
+      const next = new Set(prev);
+      next.delete(edgeId);
+      return next;
+    });
+  }, []);
 
   const togglePinnedNode = useCallback((nodeId: string) => {
     setPinnedNodeIds(prev => {
@@ -152,13 +166,15 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
 
   const setAllNodesDisplayed = useCallback((displayed: boolean) => {
     setDisplayedNodeIds(displayed ? new Set(nodes.map(node => node.id)) : new Set());
-  }, [nodes]);
+    setDisplayedEdgeIds(displayed ? new Set(edges.map(edge => edge.id)) : new Set());
+  }, [nodes, edges]);
 
   const applyScene = useCallback((scene: ViewScene) => {
     setNodeLabelMode(scene.nodeLabelMode);
     setHideIsolatedNodes(scene.hideIsolatedNodes);
     setHighlightedNodeTypes(scene.highlightedNodeTypes);
     setDisplayedNodeIds(scene.displayedNodeIds);
+    setDisplayedEdgeIds(scene.displayedEdgeIds);
     setVisibleEdgeTypes(scene.visibleEdgeTypes);
     setPinnedNodeIds(scene.pinnedNodeIds);
   }, []);
@@ -179,7 +195,7 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
     <ViewSettingsContext.Provider value={{
       nodeLabelMode, physicsEnabled, hideIsolatedNodes, overviewListsCollapsed,
       highlightedNodeTypes, displayedNodeIds, visibleNodeTypes, nodeTypeStates, visibleEdgeTypes, sparqlMatchedIds,
-      pinnedNodeIds, togglePinnedNode, hideNode, applyScene, setAllNodesDisplayed,
+      pinnedNodeIds, togglePinnedNode, hideNode, displayedEdgeIds, hideEdge, applyScene, setAllNodesDisplayed,
       setNodeLabelMode, setPhysicsEnabled, setHideIsolatedNodes, setOverviewListsCollapsed,
       toggleHighlightedNodeType, toggleNodeType, toggleEdgeType, setSparqlMatchedIds,
     }}>

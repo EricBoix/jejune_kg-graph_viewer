@@ -5,7 +5,7 @@ import { useViewSettings } from '../context/ViewSettingsContext';
 // Nodes and edges currently on the canvas, before any SPARQL highlighting filter.
 export function useDisplayedGraph() {
   const { nodes, edges } = useGraphData();
-  const { displayedNodeIds, visibleEdgeTypes, hideIsolatedNodes } = useViewSettings();
+  const { displayedNodeIds, visibleEdgeTypes, hideIsolatedNodes, displayedEdgeIds } = useViewSettings();
 
   const visibleNodes = useMemo(
     () => nodes.filter(node => displayedNodeIds.has(node.id)),
@@ -20,10 +20,11 @@ export function useDisplayedGraph() {
   const visibleEdges = useMemo(
     () => edges.filter(edge =>
       visibleEdgeTypes.has(edge.label) &&
+      displayedEdgeIds.has(edge.id) &&
       visibleNodeIds.has(edge.from) &&
       visibleNodeIds.has(edge.to)
     ),
-    [edges, visibleEdgeTypes, visibleNodeIds]
+    [edges, visibleEdgeTypes, displayedEdgeIds, visibleNodeIds]
   );
 
   // Second filter pass: drop nodes whose every edge connects to a DocumentChunk node.
