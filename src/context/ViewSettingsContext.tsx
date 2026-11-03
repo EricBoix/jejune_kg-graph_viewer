@@ -32,6 +32,7 @@ interface ViewSettingsContextValue {
   sparqlMatchedIds: Set<string> | null;
   pinnedNodeIds: Set<string>;
   togglePinnedNode: (nodeId: string) => void;
+  hideNode: (nodeId: string) => void;
   applyScene: (scene: ViewScene) => void;
   setAllNodesDisplayed: (displayed: boolean) => void;
   setNodeLabelMode: (mode: NodeLabelMode) => void;
@@ -81,6 +82,15 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
       } else {
         next.add(nodeId);
       }
+      return next;
+    });
+  }, []);
+
+  // Edges adjacent to the hidden node disappear with it (see useDisplayedGraph).
+  const hideNode = useCallback((nodeId: string) => {
+    setDisplayedNodeIds(prev => {
+      const next = new Set(prev);
+      next.delete(nodeId);
       return next;
     });
   }, []);
@@ -169,7 +179,7 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
     <ViewSettingsContext.Provider value={{
       nodeLabelMode, physicsEnabled, hideIsolatedNodes, overviewListsCollapsed,
       highlightedNodeTypes, displayedNodeIds, visibleNodeTypes, nodeTypeStates, visibleEdgeTypes, sparqlMatchedIds,
-      pinnedNodeIds, togglePinnedNode, applyScene, setAllNodesDisplayed,
+      pinnedNodeIds, togglePinnedNode, hideNode, applyScene, setAllNodesDisplayed,
       setNodeLabelMode, setPhysicsEnabled, setHideIsolatedNodes, setOverviewListsCollapsed,
       toggleHighlightedNodeType, toggleNodeType, toggleEdgeType, setSparqlMatchedIds,
     }}>

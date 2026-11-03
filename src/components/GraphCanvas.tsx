@@ -17,7 +17,7 @@ export function GraphCanvas() {
   const {
     nodeLabelMode, physicsEnabled,
     highlightedNodeTypes, sparqlMatchedIds,
-    pinnedNodeIds, togglePinnedNode,
+    pinnedNodeIds, togglePinnedNode, hideNode,
   } = useViewSettings();
   const { registerNetworkHandle, notice, dismissNotice } = useScene();
 
@@ -79,6 +79,10 @@ export function GraphCanvas() {
               label: 'Pinned',
               checked: pinnedNodeIds.has(contextMenu.nodeId),
               onSelect: () => togglePinnedNode(contextMenu.nodeId),
+            },
+            {
+              label: 'Hide',
+              onSelect: () => hideNode(contextMenu.nodeId),
             },
           ]}
         />
