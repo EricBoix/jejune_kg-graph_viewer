@@ -14,6 +14,11 @@ export const config = {
     maxWidth:     700,
   },
 
+  sample: {
+    // Source name shown when the bundled sample graph is loaded.
+    sourceName: 'sample.ttl',
+  },
+
   rdf: {
     // Predicate URI used by Neo4j RDF exports for the internal node identifier.
     neo4jIdPredicateUri: 'http://example.org/neo4j/id',

@@ -20,11 +20,11 @@ export function useRdfStore() {
   const { setGraphData } = useGraphData();
 
   const loadRdfFromString = useCallback(
-    (turtleContent: string, baseUri: string = 'http://example.org/') => {
+    (turtleContent: string, baseUri: string = 'http://example.org/', sourceName: string | null = null) => {
       const parsed = parseRdfTurtle(turtleContent, baseUri);
       const graphData = convertRdfToGraph(parsed);
       const n3Store = buildN3Store(turtleContent, baseUri);
-      setGraphData({ ...graphData, n3Store });
+      setGraphData({ ...graphData, n3Store }, sourceName);
     },
     [setGraphData]
   );
@@ -32,7 +32,7 @@ export function useRdfStore() {
   const loadRdfFromFile = useCallback(
     async (file: File) => {
       const content = await file.text();
-      loadRdfFromString(content);
+      loadRdfFromString(content, undefined, file.name);
     },
     [loadRdfFromString]
   );

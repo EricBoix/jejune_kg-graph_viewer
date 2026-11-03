@@ -1,11 +1,21 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
-import { NodeLabelMode } from '../types/graph.types';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, ReactNode } from 'react';
+import { NodeLabelMode, TypeCheckState } from '../types/graph.types';
 import { useGraphData } from './GraphDataContext';
 import { config } from '../config';
 import { nodeHighlightPalette } from '../styles/theme';
 
 const { viewSettings } = config;
-const hiddenByDefaultSet = new Set(viewSettings.hiddenByDefaultTypes);
+const hiddenByDefaultSet = new Set<string>(viewSettings.hiddenByDefaultTypes);
+
+// The part of the view that a graph-setup file rebuilds in one go.
+export interface ViewScene {
+  nodeLabelMode: NodeLabelMode;
+  hideIsolatedNodes: boolean;
+  highlightedNodeTypes: Map<string, number>;
+  displayedNodeIds: Set<string>;
+  visibleEdgeTypes: Set<string>;
+  pinnedNodeIds: Set<string>;
+}
 
 interface ViewSettingsContextValue {
   nodeLabelMode: NodeLabelMode;
@@ -13,11 +23,17 @@ interface ViewSettingsContextValue {
   hideIsolatedNodes: boolean;
   overviewListsCollapsed: boolean;
   highlightedNodeTypes: Map<string, number>;
+  // Ids of the nodes put on display; node type checkboxes add or remove instances here.
+  displayedNodeIds: Set<string>;
+  // Types having at least one displayed instance (checked or dash).
   visibleNodeTypes: Set<string>;
+  nodeTypeStates: Map<string, TypeCheckState>;
   visibleEdgeTypes: Set<string>;
   sparqlMatchedIds: Set<string> | null;
   pinnedNodeIds: Set<string>;
   togglePinnedNode: (nodeId: string) => void;
+  applyScene: (scene: ViewScene) => void;
+  setAllNodesDisplayed: (displayed: boolean) => void;
   setNodeLabelMode: (mode: NodeLabelMode) => void;
   setPhysicsEnabled: (enabled: boolean) => void;
   setHideIsolatedNodes: (value: boolean) => void;
@@ -39,15 +55,18 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
   const [overviewListsCollapsed, setOverviewListsCollapsed] = useState<boolean>(viewSettings.overviewListsCollapsed);
   const [highlightedNodeTypes, setHighlightedNodeTypes] = useState<Map<string, number>>(new Map());
   const colorCounterRef = useRef(0);
-  const [visibleNodeTypes, setVisibleNodeTypes] = useState<Set<string>>(new Set());
+  const [displayedNodeIds, setDisplayedNodeIds] = useState<Set<string>>(new Set());
   const [visibleEdgeTypes, setVisibleEdgeTypes] = useState<Set<string>>(new Set());
   const [sparqlMatchedIds, setSparqlMatchedIds] = useState<Set<string> | null>(null);
   const [pinnedNodeIds, setPinnedNodeIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const allTypes = new Set(nodes.flatMap(n => n.types));
-    hiddenByDefaultSet.forEach(t => allTypes.delete(t));
-    setVisibleNodeTypes(allTypes);
+    // A node starts displayed when it has no type or at least one type not hidden by default.
+    setDisplayedNodeIds(new Set(
+      nodes
+        .filter(node => node.types.length === 0 || node.types.some(type => !hiddenByDefaultSet.has(type)))
+        .map(node => node.id)
+    ));
     setVisibleEdgeTypes(new Set(edges.map(e => e.label)));
     setHighlightedNodeTypes(new Map());
     setSparqlMatchedIds(null);
@@ -84,16 +103,54 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const nodeTypeStates = useMemo(() => {
+    const totals = new Map<string, number>();
+    const displayedCounts = new Map<string, number>();
+    for (const node of nodes) {
+      const isDisplayed = displayedNodeIds.has(node.id);
+      for (const type of node.types) {
+        totals.set(type, (totals.get(type) ?? 0) + 1);
+        if (isDisplayed) displayedCounts.set(type, (displayedCounts.get(type) ?? 0) + 1);
+      }
+    }
+    const states = new Map<string, TypeCheckState>();
+    totals.forEach((total, type) => {
+      const displayedCount = displayedCounts.get(type) ?? 0;
+      states.set(type, displayedCount === 0 ? 'unchecked' : displayedCount === total ? 'checked' : 'dash');
+    });
+    return states;
+  }, [nodes, displayedNodeIds]);
+
+  const visibleNodeTypes = useMemo(
+    () => new Set([...nodeTypeStates].filter(([, state]) => state !== 'unchecked').map(([type]) => type)),
+    [nodeTypeStates]
+  );
+
+  // Checked or dash: remove every displayed instance of the type; unchecked: display all its instances.
   const toggleNodeType = useCallback((type: string) => {
-    setVisibleNodeTypes(prev => {
+    const instanceIds = nodes.filter(node => node.types.includes(type)).map(node => node.id);
+    setDisplayedNodeIds(prev => {
       const next = new Set(prev);
-      if (next.has(type)) {
-        next.delete(type);
+      if (instanceIds.some(id => prev.has(id))) {
+        instanceIds.forEach(id => next.delete(id));
       } else {
-        next.add(type);
+        instanceIds.forEach(id => next.add(id));
       }
       return next;
     });
+  }, [nodes]);
+
+  const setAllNodesDisplayed = useCallback((displayed: boolean) => {
+    setDisplayedNodeIds(displayed ? new Set(nodes.map(node => node.id)) : new Set());
+  }, [nodes]);
+
+  const applyScene = useCallback((scene: ViewScene) => {
+    setNodeLabelMode(scene.nodeLabelMode);
+    setHideIsolatedNodes(scene.hideIsolatedNodes);
+    setHighlightedNodeTypes(scene.highlightedNodeTypes);
+    setDisplayedNodeIds(scene.displayedNodeIds);
+    setVisibleEdgeTypes(scene.visibleEdgeTypes);
+    setPinnedNodeIds(scene.pinnedNodeIds);
   }, []);
 
   const toggleEdgeType = useCallback((type: string) => {
@@ -111,8 +168,8 @@ export function ViewSettingsProvider({ children }: { children: ReactNode }) {
   return (
     <ViewSettingsContext.Provider value={{
       nodeLabelMode, physicsEnabled, hideIsolatedNodes, overviewListsCollapsed,
-      highlightedNodeTypes, visibleNodeTypes, visibleEdgeTypes, sparqlMatchedIds,
-      pinnedNodeIds, togglePinnedNode,
+      highlightedNodeTypes, displayedNodeIds, visibleNodeTypes, nodeTypeStates, visibleEdgeTypes, sparqlMatchedIds,
+      pinnedNodeIds, togglePinnedNode, applyScene, setAllNodesDisplayed,
       setNodeLabelMode, setPhysicsEnabled, setHideIsolatedNodes, setOverviewListsCollapsed,
       toggleHighlightedNodeType, toggleNodeType, toggleEdgeType, setSparqlMatchedIds,
     }}>

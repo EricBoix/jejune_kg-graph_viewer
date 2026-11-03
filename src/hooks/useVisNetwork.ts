@@ -1,5 +1,5 @@
 import { colors, nodeHighlightPalette } from '../styles/theme';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { Network, Options } from 'vis-network';
 import { DataSet } from 'vis-data';
 import { GraphNode, GraphEdge, Selection, NodeLabelMode } from '../types/graph.types';
@@ -19,6 +19,16 @@ interface UseVisNetworkProps {
   onNodeContextMenu: (request: NodeContextMenuRequest) => void;
 }
 
+export type NodePositions = Record<string, { x: number; y: number }>;
+
+// Canvas access for saving and restoring a scene (see SceneContext).
+export interface NetworkHandle {
+  getPositions: (nodeIds: string[]) => NodePositions;
+  // Positions are applied together with the next node sync, once the nodes exist on the canvas.
+  placeNodes: (positions: NodePositions) => void;
+  onceStabilized: (callback: () => void) => void;
+}
+
 export interface NodeContextMenuRequest {
   nodeId: string;
   x: number;
@@ -31,7 +41,7 @@ interface NodeColor {
   highlight: { background: string; border: string };
 }
 
-type VisNode = { id: string; label: string; color?: NodeColor; physics?: boolean; borderWidth?: number };
+type VisNode = { id: string; label: string; color?: NodeColor; physics?: boolean; borderWidth?: number; x?: number; y?: number };
 
 const { graph } = config;
 
@@ -98,6 +108,7 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
   const edgesDataSetRef = useRef<DataSet<{ id: string; from: string; to: string; label: string }>>(new DataSet());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const pendingPositionsRef = useRef<NodePositions>({});
   const onNodeContextMenuRef = useRef(onNodeContextMenu);
   onNodeContextMenuRef.current = onNodeContextMenu;
 
@@ -241,12 +252,15 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
   // thicker in the same color. vis-network doubles borderWidth when selected,
   // so a selected pinned node stays thicker than a selected unpinned one.
   useEffect(() => {
+    const pendingPositions = pendingPositionsRef.current;
+    pendingPositionsRef.current = {};
     const updates = nodes.map(n => {
       const pinned = pinnedNodeIds.has(n.id);
       return {
         id: n.id,
         physics: !pinned,
         borderWidth: pinned ? graph.pinnedNodeBorderWidthPx : graph.nodeBorderWidthPx,
+        ...(pendingPositions[n.id] ?? {}),
       };
     });
     nodesDataSetRef.current.update(updates);
@@ -256,8 +270,24 @@ export function useVisNetwork({ nodes, edges, nodeLabelMode, physicsEnabled, hig
     networkRef.current?.fit();
   }, []);
 
+  const networkHandle = useMemo<NetworkHandle>(() => ({
+    getPositions: (nodeIds) => {
+      const positions = networkRef.current?.getPositions(nodeIds) ?? {};
+      return Object.fromEntries(
+        Object.entries(positions).map(([nodeId, { x, y }]) => [nodeId, { x, y }])
+      );
+    },
+    placeNodes: (positions) => {
+      pendingPositionsRef.current = positions;
+    },
+    onceStabilized: (callback) => {
+      networkRef.current?.once('stabilized', callback);
+    },
+  }), []);
+
   return {
     containerRef,
     fit,
+    networkHandle,
   };
 }

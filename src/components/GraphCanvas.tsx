@@ -2,7 +2,10 @@ import { colors } from '../styles/theme';
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useGraphData } from '../context/GraphDataContext';
 import { useViewSettings } from '../context/ViewSettingsContext';
+import { useScene } from '../context/SceneContext';
+import { useDisplayedGraph } from '../hooks/useDisplayedGraph';
 import { useVisNetwork, NodeContextMenuRequest } from '../hooks/useVisNetwork';
+import { SetupNotice } from './SetupNotice';
 import { NodeContextMenu } from './NodeContextMenu';
 import { NodeCount } from './NodeCount';
 import { FileSourceButton } from './FileSourceButton';
@@ -10,66 +13,15 @@ import { FitScreenButton } from './FitScreenButton';
 import { PhysicsToggle } from './PhysicsToggle';
 
 export function GraphCanvas() {
-  const { nodes, edges, setSelection } = useGraphData();
+  const { nodes, setSelection } = useGraphData();
   const {
-    nodeLabelMode, physicsEnabled, hideIsolatedNodes,
-    visibleNodeTypes, visibleEdgeTypes, highlightedNodeTypes, sparqlMatchedIds,
+    nodeLabelMode, physicsEnabled,
+    highlightedNodeTypes, sparqlMatchedIds,
     pinnedNodeIds, togglePinnedNode,
   } = useViewSettings();
+  const { registerNetworkHandle, notice, dismissNotice } = useScene();
 
-  // A node is visible when ANY of its types is checked (some, not every).
-  // RDF nodes routinely carry several types (e.g. ['Concept','skos:Concept',
-  // 'owl:NamedIndividual']); requiring every type to be checked would silently
-  // hide nodes whose count IS shown in the Overview panel, because the panel
-  // counts with .includes() (some semantics). Keeping both consistent avoids
-  // the "1514 listed but 0 shown" confusion.
-  const visibleNodes = useMemo(
-    () => nodes.filter(n => n.types.length === 0 || n.types.some(t => visibleNodeTypes.has(t))),
-    [nodes, visibleNodeTypes]
-  );
-
-  const visibleNodeIds = useMemo(
-    () => new Set(visibleNodes.map(n => n.id)),
-    [visibleNodes]
-  );
-
-  const visibleEdges = useMemo(
-    () => edges.filter(e =>
-      visibleEdgeTypes.has(e.label) &&
-      visibleNodeIds.has(e.from) &&
-      visibleNodeIds.has(e.to)
-    ),
-    [edges, visibleEdgeTypes, visibleNodeIds]
-  );
-
-  // Second filter pass: drop nodes whose every edge connects to a DocumentChunk node.
-  // Use the full graph (not the visible subgraph) to evaluate isolation so that a
-  // node hidden only because its neighbors' types are currently deselected is not
-  // incorrectly classified as isolated.
-  const displayedNodes = useMemo(() => {
-    if (!hideIsolatedNodes) return visibleNodes;
-    const allDocumentIds = new Set(
-      nodes.filter(n => n.types.includes('DocumentChunk')).map(n => n.id)
-    );
-    const connectedToNonDoc = new Set<string>();
-    for (const edge of edges) {
-      if (!allDocumentIds.has(edge.from) || !allDocumentIds.has(edge.to)) {
-        connectedToNonDoc.add(edge.from);
-        connectedToNonDoc.add(edge.to);
-      }
-    }
-    return visibleNodes.filter(n => allDocumentIds.has(n.id) || connectedToNonDoc.has(n.id));
-  }, [visibleNodes, nodes, edges, hideIsolatedNodes]);
-
-  const displayedNodeIds = useMemo(
-    () => new Set(displayedNodes.map(n => n.id)),
-    [displayedNodes]
-  );
-
-  const displayedEdges = useMemo(
-    () => visibleEdges.filter(e => displayedNodeIds.has(e.from) && displayedNodeIds.has(e.to)),
-    [visibleEdges, displayedNodeIds]
-  );
+  const { displayedNodes, displayedEdges } = useDisplayedGraph();
 
   const sparqlNodes = useMemo(
     () => sparqlMatchedIds ? displayedNodes.filter(n => sparqlMatchedIds.has(n.id)) : displayedNodes,
@@ -90,7 +42,7 @@ export function GraphCanvas() {
   // A new graph load resets the pins; a menu left open would act on a stale node.
   useEffect(() => { setContextMenu(null); }, [nodes]);
 
-  const { containerRef, fit } = useVisNetwork({
+  const { containerRef, fit, networkHandle } = useVisNetwork({
     nodes: sparqlNodes,
     edges: sparqlEdges,
     nodeLabelMode,
@@ -100,6 +52,11 @@ export function GraphCanvas() {
     onSelect: setSelection,
     onNodeContextMenu: setContextMenu,
   });
+
+  useEffect(() => {
+    registerNetworkHandle(networkHandle);
+    return () => registerNetworkHandle(null);
+  }, [registerNetworkHandle, networkHandle]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -111,6 +68,7 @@ export function GraphCanvas() {
           backgroundColor: colors.backgroundCanvas,
         }}
       />
+      {notice && <SetupNotice message={notice} onDismiss={dismissNotice} />}
       {contextMenu && (
         <NodeContextMenu
           x={contextMenu.x}

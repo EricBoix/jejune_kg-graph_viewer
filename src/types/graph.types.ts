@@ -31,6 +31,9 @@ export type SelectionType = 'node' | 'edge' | null;
 
 export type NodeLabelMode = 'name' | 'neoId';
 
+// Tri-state of a node type checkbox: all instances displayed, some, or none.
+export type TypeCheckState = 'checked' | 'dash' | 'unchecked';
+
 export interface Selection {
   type: SelectionType;
   id: string | null;

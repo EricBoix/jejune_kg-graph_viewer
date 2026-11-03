@@ -7,10 +7,12 @@ interface GraphDataContextValue {
   edges: GraphEdge[];
   namespaces: Record<string, string>;
   n3Store: N3Store | null;
+  // Name of the loaded RDF file (null when unknown, e.g. a triple store).
+  sourceName: string | null;
   selection: Selection;
   selectedNode: GraphNode | undefined;
   selectedEdge: GraphEdge | undefined;
-  setGraphData: (data: GraphData) => void;
+  setGraphData: (data: GraphData, sourceName?: string | null) => void;
   setSelection: (selection: Selection) => void;
   updateNode: (id: string, updates: Partial<Pick<GraphNode, 'label' | 'metadata'>>) => void;
   updateEdge: (id: string, updates: Partial<Pick<GraphEdge, 'label'>>) => void;
@@ -23,13 +25,15 @@ export function GraphDataProvider({ children }: { children: ReactNode }) {
   const [edges, setEdges] = useState<GraphEdge[]>([]);
   const [namespaces, setNamespaces] = useState<Record<string, string>>({});
   const [n3Store, setN3Store] = useState<N3Store | null>(null);
+  const [sourceName, setSourceName] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection>({ type: null, id: null });
 
-  const setGraphData = useCallback((data: GraphData) => {
+  const setGraphData = useCallback((data: GraphData, sourceName: string | null = null) => {
     setNodes(data.nodes);
     setEdges(data.edges);
     setNamespaces(data.namespaces);
     setN3Store(data.n3Store);
+    setSourceName(sourceName);
     setSelection({ type: null, id: null });
   }, []);
 
@@ -53,7 +57,7 @@ export function GraphDataProvider({ children }: { children: ReactNode }) {
 
   return (
     <GraphDataContext.Provider value={{
-      nodes, edges, namespaces, n3Store, selection, selectedNode, selectedEdge,
+      nodes, edges, namespaces, n3Store, sourceName, selection, selectedNode, selectedEdge,
       setGraphData, setSelection, updateNode, updateEdge,
     }}>
       {children}

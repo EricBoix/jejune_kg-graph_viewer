@@ -40,7 +40,7 @@ function countColumnArrow(mode: SortMode): string {
 
 export function OverviewPanel() {
   const { nodes, edges } = useGraphData();
-  const { visibleNodeTypes, visibleEdgeTypes, toggleNodeType, toggleEdgeType,
+  const { nodeTypeStates, visibleEdgeTypes, toggleNodeType, setAllNodesDisplayed, toggleEdgeType,
           overviewListsCollapsed, highlightedNodeTypes, toggleHighlightedNodeType } = useViewSettings();
 
   const [nodeTypesOpen, setNodeTypesOpen] = useState(!overviewListsCollapsed);
@@ -75,18 +75,14 @@ export function OverviewPanel() {
     [edgeTypeSet, edgeTypeCounts, edgeSortMode]
   );
 
-  const isNodeAllVisible = nodeTypeSet.length > 0 && nodeTypeSet.every(t => visibleNodeTypes.has(t));
-  const isNodeMixed = !isNodeAllVisible && nodeTypeSet.some(t => visibleNodeTypes.has(t));
+  const isNodeAllVisible = nodeTypeSet.length > 0 && nodeTypeSet.every(t => nodeTypeStates.get(t) === 'checked');
+  const isNodeMixed = !isNodeAllVisible && nodeTypeSet.some(t => nodeTypeStates.get(t) !== 'unchecked');
 
   const isEdgeAllVisible = edgeTypeSet.length > 0 && edgeTypeSet.every(t => visibleEdgeTypes.has(t));
   const isEdgeMixed = !isEdgeAllVisible && edgeTypeSet.some(t => visibleEdgeTypes.has(t));
 
   function handleNodeSelectAll() {
-    if (isNodeAllVisible) {
-      nodeTypeSet.forEach(t => { if (visibleNodeTypes.has(t)) toggleNodeType(t); });
-    } else {
-      nodeTypeSet.forEach(t => { if (!visibleNodeTypes.has(t)) toggleNodeType(t); });
-    }
+    setAllNodesDisplayed(!isNodeAllVisible);
   }
 
   function handleEdgeSelectAll() {
@@ -137,7 +133,8 @@ export function OverviewPanel() {
                 <div key={type} style={styles.row}>
                   <input
                     type="checkbox"
-                    checked={visibleNodeTypes.has(type)}
+                    ref={(el) => { if (el) el.indeterminate = nodeTypeStates.get(type) === 'dash'; }}
+                    checked={nodeTypeStates.get(type) === 'checked'}
                     onChange={() => toggleNodeType(type)}
                     style={styles.checkbox}
                   />
