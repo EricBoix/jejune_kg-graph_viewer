@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { useGraphData } from './GraphDataContext';
 import { useViewSettings } from './ViewSettingsContext';
 import { useOxigraph } from './OxigraphContext';
@@ -72,15 +72,7 @@ export function SceneProvider({ children }: { children: ReactNode }) {
     highlightedNodeTypes, visibleEdgeTypes, namespaces,
   ]);
 
-  const loadSetupFromFile = useCallback(async (file: File) => {
-    let setup: GraphSetup;
-    try {
-      setup = new GraphSetupSerializer(namespaces).parse(await file.text());
-    } catch (error) {
-      setNotice(`Cannot load setup: ${error instanceof Error ? error.message : String(error)}`);
-      return;
-    }
-
+  const applySetup = useCallback((setup: GraphSetup) => {
     const warnings: string[] = [];
     const currentKind = oxigraphUrl ? 'triplestore' : 'file';
     if (setup.source.kind !== currentKind) {
@@ -129,7 +121,46 @@ export function SceneProvider({ children }: { children: ReactNode }) {
     }
 
     setNotice(warnings.length > 0 ? warnings.join('\n') : null);
-  }, [nodes, edges, namespaces, sourceName, oxigraphUrl, applyScene, setPhysicsEnabled]);
+  }, [nodes, edges, sourceName, oxigraphUrl, applyScene, setPhysicsEnabled]);
+
+  const loadSetupFromText = useCallback((text: string) => {
+    try {
+      applySetup(new GraphSetupSerializer(namespaces).parse(text));
+    } catch (error) {
+      setNotice(`Cannot load setup: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [namespaces, applySetup]);
+
+  const loadSetupFromFile = useCallback(
+    async (file: File) => loadSetupFromText(await file.text()),
+    [loadSetupFromText]
+  );
+
+  // Setup given by the `?setup=<url>` parameter: fetched once, then applied when the graph is loaded.
+  const [pendingSetupText, setPendingSetupText] = useState<string | null>(null);
+  // The reset effect of ViewSettingsProvider (a parent, so its effects run after ours in a commit)
+  // wipes the scene when nodes change: apply the pending setup one render after that reset.
+  const [settledNodes, setSettledNodes] = useState(nodes);
+
+  useEffect(() => {
+    const setupUrl = new URLSearchParams(window.location.search).get('setup');
+    if (!setupUrl) return;
+    fetch(setupUrl)
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.text();
+      })
+      .then(setPendingSetupText)
+      .catch(error => setNotice(`Cannot fetch setup ${setupUrl}: ${error instanceof Error ? error.message : String(error)}`));
+  }, []);
+
+  useEffect(() => setSettledNodes(nodes), [nodes]);
+
+  useEffect(() => {
+    if (pendingSetupText === null || nodes.length === 0 || settledNodes !== nodes) return;
+    setPendingSetupText(null);
+    loadSetupFromText(pendingSetupText);
+  }, [pendingSetupText, nodes, settledNodes, loadSetupFromText]);
 
   return (
     <SceneContext.Provider value={{ registerNetworkHandle, saveSetup, loadSetupFromFile, notice, dismissNotice }}>

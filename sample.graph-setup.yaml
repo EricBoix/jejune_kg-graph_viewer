@@ -1,0 +1,29 @@
+#Graph setup written by kg_graph_viewer.
+#Node ids are prefixed names (see prefixes) or <full URIs>.
+#Only pinned nodes carry x, y coordinates.
+
+version: 1
+source:
+  kind: file
+  turtle_file: sample.ttl
+prefixes:
+  ex: http://example.org/
+nodeLabelMode: neoId
+hideIsolatedNodes: true
+highlightedNodeTypes: {}
+hiddenEdgeTypes: []
+nodes:
+  - id: ex:Alice
+    pinned: true
+    x: 470
+    y: -522
+  - id: ex:Bob
+    pinned: true
+    x: 133
+    y: 494
+  - id: ex:Charlie
+  - id: ex:AcmeCorp
+    pinned: true
+    x: -734
+    y: -174
+  - id: ex:Project1
