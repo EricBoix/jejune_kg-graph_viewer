@@ -4,6 +4,7 @@ import urllib.request
 
 import click
 
+from jejune_cli.app_context import AppContext
 from jejune_cli.plugin_description import PluginDescription
 
 from .component_cont_kg_viewer import CompKgViewer
@@ -12,11 +13,9 @@ from .click_cont_comp_kg_viewer import view
 _DEFAULT_PORT = "8080"
 _CONFIG_VAR = "KG_PORT"
 
-_component = CompKgViewer()
 
-
-def _check_availability() -> tuple[bool, str]:
-    if not _component.is_running()[0]:
+def _check_availability(component: CompKgViewer) -> tuple[bool, str]:
+    if not component.is_running()[0]:
         return False, "container not running"
     port = os.environ.get(_CONFIG_VAR, _DEFAULT_PORT)
     url = f"http://localhost:{port}/"
@@ -29,6 +28,10 @@ def _check_availability() -> tuple[bool, str]:
         return False, str(exc)
 
 
+def _registered_component(ctx: click.Context) -> CompKgViewer:
+    return ctx.find_object(AppContext).component_registry.get("kg-viewer")
+
+
 @click.group("kg-viewer")
 def kg_viewer_group():
     """Commands for the jejune kg-graph-viewer UI component."""
@@ -38,9 +41,10 @@ kg_viewer_group.add_command(view)
 
 
 @kg_viewer_group.command("status-availability")
-def status_availability():
+@click.pass_context
+def status_availability(ctx):
     """Show kg-viewer availability status (mirrors the doctor Status column)."""
-    ok, _ = _check_availability()
+    ok, _ = _check_availability(_registered_component(ctx))
     if ok:
         click.echo(f"kg-viewer: {click.style('ok', fg='green')}")
     else:
@@ -48,9 +52,10 @@ def status_availability():
 
 
 @kg_viewer_group.command("hint-availability")
-def hint_availability():
+@click.pass_context
+def hint_availability(ctx):
     """Show how to start the kg-graph-viewer container."""
-    ok, _ = _check_availability()
+    ok, _ = _check_availability(_registered_component(ctx))
     if ok:
         click.echo(click.style("kg-viewer is reachable", fg="green"))
     else:
@@ -65,6 +70,6 @@ plugin = PluginDescription(
     avail_hint="",
     check_availability=_check_availability,
     target_role="deployer",
-    component=_component,
+    component_factory=CompKgViewer,
     repo_name="jejune_kg-graph_viewer",
 )

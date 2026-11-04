@@ -3,6 +3,7 @@
 import os
 import shutil
 import socket
+import subprocess
 import webbrowser
 from pathlib import Path
 from urllib.parse import urlparse
@@ -10,19 +11,21 @@ from urllib.parse import urlparse
 import click
 
 from jejune_cli.component_containerized import ContComp
+from jejune_cli.containerized_context import ContainerizedContext
 
 _VIEWER_DATA = Path.home() / ".jejune" / "viewer_data"
 _VIEWER_NAME_PREFIX = "jejune_kg_viewer_"
 
 
 class CompKgViewer(ContComp):
-    def __init__(self) -> None:
+    def __init__(self, context: ContainerizedContext) -> None:
         super().__init__(
             name="kg-viewer",
             image_name="jejune:kg-graph-viewer",
             dockerfile="DockerContext/Dockerfile",
             service_name="kg-graph-viewer",
             hint="run `jejune build`",
+            context=context,
         )
         self.repos = [(None, "KG_GRAPH_VIEWER_CONTEXT")]
         if self._context.ecosystem is not None:
@@ -76,8 +79,6 @@ class CompKgViewer(ContComp):
     def _open_browser(self, url: str) -> None:
         browser = os.environ.get("JEJUNE_BROWSER")
         if browser:
-            import subprocess
-
             subprocess.Popen([browser, url])
         else:
             webbrowser.open(url)
