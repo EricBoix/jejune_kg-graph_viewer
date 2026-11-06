@@ -46,20 +46,20 @@ Interactive web application for visualizing RDF knowledge graphs using vis-netwo
 Build the image from the `DockerContext/` directory, which holds the `Dockerfile`:
 
 ```bash
-docker build -t jejuneness:kg_graph_viewer DockerContext/
+docker build -t jejune:kg_graph_viewer DockerContext/
 ```
 
 Or build directly from GitHub without cloning (requires a public repository):
 
 ```bash
-docker build -t jejuneness:kg_graph_viewer \
+docker build -t jejune:kg_graph_viewer \
   "https://github.com/EricBoix/jejune_kg-graph_viewer.git#main:DockerContext"
 ```
 
 Run the container, mapping nginx port 80 to localhost:8080:
 
 ```bash
-docker run --rm -p 8080:80 jejuneness:kg_graph_viewer
+docker run --rm -p 8080:80 jejune:kg_graph_viewer
 open http://localhost:8080
 ```
 
