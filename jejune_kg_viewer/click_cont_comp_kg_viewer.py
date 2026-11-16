@@ -1,6 +1,6 @@
 import click
 
-from jejune_cli.app_context import AppContext
+from jejune_cli.core.app_context import AppContext
 
 _META_URL = "viewer_url"
 

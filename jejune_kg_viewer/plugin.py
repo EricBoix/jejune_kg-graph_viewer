@@ -4,8 +4,8 @@ import urllib.request
 
 import click
 
-from jejune_cli.app_context import AppContext
-from jejune_cli.plugin_description import PluginDescription
+from jejune_cli.core.app_context import AppContext
+from jejune_cli.plugins.plugin_description import PluginDescription
 
 from .component_cont_kg_viewer import CompKgViewer
 from .click_cont_comp_kg_viewer import view

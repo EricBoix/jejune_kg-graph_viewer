@@ -10,8 +10,8 @@ from urllib.parse import urlparse
 
 import click
 
-from jejune_cli.component_containerized import ContComp
-from jejune_cli.containerized_context import ContainerizedContext
+from jejune_cli.core.component_containerized import ContComp
+from jejune_cli.core.containerized_context import ContainerizedContext
 
 _VIEWER_DATA = Path.home() / ".jejune" / "viewer_data"
 _VIEWER_NAME_PREFIX = "jejune_kg_viewer_"
